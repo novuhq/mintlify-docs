@@ -42,6 +42,13 @@ const stripJsx = (s) =>
 const titleFromName = (name) =>
   name.replace(/^\(|\)$/g, '').replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+// normalize a meta.json icon (PascalCase Lucide name) to a valid kebab-case Lucide icon
+const ICON_ALIASES = { 'code-2': 'square-code', home: 'house', sparkle: 'sparkles', sliders: 'sliders-horizontal', 'plus-circle': 'circle-plus', android: 'smartphone', node: 'server', 'circle-info': 'info', layout: 'layout-dashboard', 'circle-help': 'circle-question-mark' };
+const normalizeIcon = (s) => {
+  const k = s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Za-z])([0-9])/g, '$1-$2').toLowerCase();
+  return ICON_ALIASES[k] || k;
+};
+
 // remap stale meta.json refs to their real (renamed) page so they stay in the sidebar
 const SLUG_REMAP = {
   'platform/concepts/notifications': 'platform/concepts/notification-event',
@@ -83,7 +90,9 @@ function resolveEntry(entry, dirAbs, urlBase) {
     const items = resolvePages(fsPath, childBase);
     const meta = readMeta(fsPath);
     if (isRouteGroup(baseName) && !meta?.title) return items; // inline route group
-    return [{ group: meta?.title ? stripJsx(meta.title) : titleFromName(baseName), pages: items }];
+    const group = { group: meta?.title ? stripJsx(meta.title) : titleFromName(baseName), pages: items };
+    if (meta?.icon) group.icon = normalizeIcon(meta.icon); // restore Lucide group icon
+    return [group];
   }
   // unknown -> best-effort page slug (validation will flag)
   const s = slug(urlBase, entry);
@@ -188,7 +197,7 @@ function prune(items) {
   const out = [];
   for (const it of items) {
     if (typeof it === 'string') { if (existing.has(it)) out.push(it); }
-    else { const pages = prune(it.pages); if (pages.length) out.push({ group: it.group, pages }); }
+    else { const pages = prune(it.pages); if (pages.length) out.push({ group: it.group, ...(it.icon ? { icon: it.icon } : {}), pages }); }
   }
   return out;
 }

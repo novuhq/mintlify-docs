@@ -29,15 +29,31 @@ const report = {
 
 // ---- brand icon mapping: custom SVG icon components -> Font Awesome brand names.
 // Lucide-style PascalCase icons (Brain, Zap, Rocket, ...) are kebab-cased automatically.
+// Brand/framework icon components -> valid Lucide glyphs (Lucide has no brand logos,
+// so map to the closest semantic icon). The docs site uses the Lucide icon library.
 const BRAND_MAP = {
-  NextjsIcon: 'node-js', ExpressjsIcon: 'node-js', RemixIcon: 'react',
-  NestjsIcon: 'node-js', SvelteIcon: 'js', NuxtIcon: 'vuejs', VueIcon: 'vuejs',
-  ReactIcon: 'react', AngularIcon: 'angular', NodeIcon: 'node-js', PhpIcon: 'php',
-  PythonIcon: 'python', GoIcon: 'golang', GolangIcon: 'golang', JavaIcon: 'java',
-  RubyIcon: 'gem', DotnetIcon: 'microsoft', TypescriptIcon: 'js', JavascriptIcon: 'js',
-  LaravelIcon: 'laravel', KotlinIcon: 'android', H3Icon: 'node-js', LambdaIcon: 'aws',
-  ClerkIcon: 'react', StripeIcon: 'stripe', SegmentIcon: 'chart-simple',
+  NextjsIcon: 'square-code', ExpressjsIcon: 'server', RemixIcon: 'atom',
+  NestjsIcon: 'server', SvelteIcon: 'braces', NuxtIcon: 'braces', VueIcon: 'braces',
+  ReactIcon: 'atom', AngularIcon: 'braces', NodeIcon: 'server', PhpIcon: 'code',
+  PythonIcon: 'code', GoIcon: 'code', GolangIcon: 'code', JavaIcon: 'coffee',
+  RubyIcon: 'gem', DotnetIcon: 'code', TypescriptIcon: 'braces', JavascriptIcon: 'braces',
+  LaravelIcon: 'code', KotlinIcon: 'coffee', H3Icon: 'server', LambdaIcon: 'cloud',
+  ClerkIcon: 'atom', StripeIcon: 'credit-card', SegmentIcon: 'activity',
 };
+
+// Normalize FA/brand leftovers and deprecated Lucide aliases to valid Lucide names.
+const ICON_ALIASES = {
+  'node-js': 'server', nextjs: 'square-code', vuejs: 'braces', angular: 'braces',
+  golang: 'code', js: 'braces', react: 'atom', python: 'code', php: 'code', java: 'coffee',
+  laravel: 'code', microsoft: 'code', stripe: 'credit-card', aws: 'cloud', 'chart-simple': 'activity',
+  // deprecated Lucide aliases / FA-style names -> current valid Lucide names
+  'code-2': 'square-code', home: 'house', sparkle: 'sparkles', sliders: 'sliders-horizontal',
+  'plus-circle': 'circle-plus', android: 'smartphone', node: 'server', 'circle-info': 'info',
+  layout: 'layout-dashboard',
+  // Mintlify's Lucide v1.16.0 mirror lacks the renamed "circle-help"/"help-circle"
+  'circle-help': 'circle-question-mark',
+};
+const normalizeIcon = (name) => ICON_ALIASES[name] || name;
 
 // PascalCase / camelCase -> kebab-case (Lucide icon naming). Code2 -> code-2.
 function kebab(name) {
@@ -47,14 +63,13 @@ function kebab(name) {
     .toLowerCase();
 }
 
-// Resolve an icon component/name to a Mintlify icon string.
+// Resolve an icon component/name to a valid Lucide icon string.
 function iconNameFor(comp) {
   if (BRAND_MAP[comp]) return BRAND_MAP[comp];
-  if (comp.endsWith('Icon') && BRAND_MAP[comp]) return BRAND_MAP[comp];
   // unknown *Icon brand component -> best-effort kebab of its base
-  if (comp.endsWith('Icon')) return kebab(comp.replace(/Icon$/, ''));
+  if (comp.endsWith('Icon')) return normalizeIcon(kebab(comp.replace(/Icon$/, '')));
   // Lucide-style component name
-  return kebab(comp);
+  return normalizeIcon(kebab(comp));
 }
 
 // Standard MDX component imports that are Mintlify globals -> strip the import line
@@ -128,7 +143,7 @@ function rewriteFrontmatter(fm) {
       if (curKey === 'icon') {
         // normalize Lucide/FA icon name to kebab-case (e.g. "CircleHelp" -> "circle-help")
         const iv = line.match(/^icon:\s*['"]?([^'"]+)['"]?\s*$/);
-        if (iv && /[A-Z]/.test(iv[1])) { out.push(`icon: "${kebab(iv[1].trim())}"`); continue; }
+        if (iv) { out.push(`icon: "${normalizeIcon(kebab(iv[1].trim()))}"`); continue; }
         out.push(line);
       } else if (curKey === 'title' || curKey === 'sidebarTitle') {
         // strip JSX from titles (e.g. "Setup the <Subscription />" -> "Setup the Subscription")

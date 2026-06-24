@@ -61,6 +61,24 @@ favicon → `favicon.svg`; `.mintignore` excludes `docs-old/` and `migration/`.
 
 Imports inside ```code fences``` are preserved (fence-aware masking).
 
+## Icons
+
+The source used Lucide icons, so `docs.json` sets `"icons": { "library": "lucide" }`. Mintlify
+renders Lucide from `cloudfront.net/lucide/v1.16.0/<name>.svg`, so icon names are validated
+against that mirror. `migrate-content.mjs` kebab-cases names and applies `ICON_ALIASES` for
+brand icons (Lucide has no logos: React→`atom`, Node→`server`, Java→`coffee`, …) and for
+names absent from v1.16.0 (`circle-help`→`circle-question-mark`, `code-2`→`square-code`, etc.).
+Group icons are restored from each folder's `meta.json`. All 95 distinct icons in use return 200.
+
+## API reference spec
+
+`migrate-openapi.mjs` fetches the **complete** spec from Speakeasy
+(`https://spec.speakeasy.com/novu/novu/json-development-with-code-samples`, ~93 paths, v3.15.0)
+— `docs-old/openapi.json` was a stale 36-path snapshot that left 80+ pages empty. It also
+strips stray quotes from routes (`'/v2/x/{id}'` → `/v2/x/{id}`) and resolves param-name drift
+(`{variableId}` → `{variableKey}`) by matching each operation's structural signature against the
+spec. All 116 operation pages resolve to a real spec operation (verified at generation time).
+
 ## Redirects
 
 All ~80 explicit entries from `docs-old/src/middleware.ts` `redirectMap` + root `/`→`/platform`,

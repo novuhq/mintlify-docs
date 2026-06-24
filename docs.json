@@ -8,6 +8,9 @@
     "dark": "#FF4CE1"
   },
   "favicon": "/favicon.svg",
+  "icons": {
+    "library": "lucide"
+  },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
@@ -26,6 +29,7 @@
               "platform/how-novu-works",
               {
                 "group": "Core Concepts",
+                "icon": "blocks",
                 "pages": [
                   "platform/concepts/notification-event",
                   "platform/concepts/workflows",
@@ -39,6 +43,7 @@
               },
               {
                 "group": "Quickstart",
+                "icon": "zap",
                 "pages": [
                   "platform/quickstart/react",
                   "platform/quickstart/nextjs",
@@ -57,6 +62,7 @@
               "platform/inbox/setup-inbox",
               {
                 "group": "Features",
+                "icon": "blocks",
                 "pages": [
                   "platform/inbox/features/snooze",
                   "platform/inbox/features/schedule"
@@ -64,6 +70,7 @@
               },
               {
                 "group": "Customize and Configure",
+                "icon": "sliders-horizontal",
                 "pages": [
                   "platform/inbox/configuration/styling",
                   "platform/inbox/configuration/tabs",
@@ -75,6 +82,7 @@
               },
               {
                 "group": "Advanced Customization",
+                "icon": "wand",
                 "pages": [
                   "platform/inbox/advanced-customization/customize-bell",
                   "platform/inbox/advanced-customization/customize-popover",
@@ -86,6 +94,7 @@
               },
               {
                 "group": "Advanced Features",
+                "icon": "network",
                 "pages": [
                   "platform/inbox/advanced-features/localization",
                   "platform/inbox/advanced-features/multi-tenancy"
@@ -116,6 +125,7 @@
                 "pages": [
                   {
                     "group": "Configure Action Steps",
+                    "icon": "package",
                     "pages": [
                       "platform/workflow/add-and-configure-steps/configure-action-steps/delay",
                       "platform/workflow/add-and-configure-steps/configure-action-steps/digest",
@@ -129,6 +139,7 @@
               },
               {
                 "group": "Add Notification Content",
+                "icon": "package",
                 "pages": [
                   "platform/workflow/add-notification-content/channels-template-editors",
                   "platform/workflow/add-notification-content/personalize-content"
@@ -138,10 +149,12 @@
               "platform/workflow/monitor-and-debug-workflow",
               {
                 "group": "Advanced Features",
+                "icon": "sparkles",
                 "pages": [
                   "platform/workflow/advanced-features/translations",
                   {
                     "group": "Contexts",
+                    "icon": "package",
                     "pages": [
                       "platform/workflow/advanced-features/contexts/manage-contexts",
                       "platform/workflow/advanced-features/contexts/contexts-in-workflows"
@@ -158,6 +171,7 @@
               "platform/integrations/demo-integration",
               {
                 "group": "Chat",
+                "icon": "message-square",
                 "pages": [
                   "platform/integrations/chat/discord",
                   "platform/integrations/chat/mattermost",
@@ -169,6 +183,7 @@
               },
               {
                 "group": "Email",
+                "icon": "mail",
                 "pages": [
                   "platform/integrations/email/sendgrid",
                   "platform/integrations/email/amazon-ses",
@@ -207,6 +222,7 @@
               },
               {
                 "group": "Push",
+                "icon": "smartphone",
                 "pages": [
                   "platform/integrations/push/fcm",
                   "platform/integrations/push/expo-push",
@@ -220,6 +236,7 @@
               },
               {
                 "group": "Sms",
+                "icon": "message-circle",
                 "pages": [
                   "platform/integrations/sms/twilio",
                   "platform/integrations/sms/infobip",
@@ -255,6 +272,7 @@
               "platform/sdks",
               {
                 "group": "@novu/react",
+                "icon": "library",
                 "pages": [
                   "platform/sdks/react",
                   {
@@ -275,6 +293,7 @@
               "platform/sdks/javascript",
               {
                 "group": "@novu/react-native",
+                "icon": "smartphone",
                 "pages": [
                   "platform/sdks/react-native",
                   {
@@ -292,6 +311,7 @@
               },
               {
                 "group": "Server-Side",
+                "icon": "server",
                 "pages": [
                   "platform/sdks/server/typescript",
                   "platform/sdks/server/python",
@@ -315,6 +335,7 @@
               "platform/developer/limits",
               {
                 "group": "Webhooks",
+                "icon": "webhook",
                 "pages": [
                   "platform/developer/webhooks/event-types",
                   "platform/developer/webhooks/connectors"
@@ -381,6 +402,7 @@
               "agents/custom-code-agent/connect-your-first-agent",
               {
                 "group": "Set up your Agent",
+                "icon": "blocks",
                 "pages": [
                   "agents/custom-code-agent/setup-your-agent/overview",
                   "agents/custom-code-agent/setup-your-agent/create-an-agent",

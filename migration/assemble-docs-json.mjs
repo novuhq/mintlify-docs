@@ -37,6 +37,9 @@ const docs = {
   // backgrounds; brighter #FF4CE1 used as the dark-mode accent.
   colors: { primary: '#D1006E', light: '#FF4CE1', dark: '#FF4CE1' },
   favicon: '/favicon.svg',
+  // source docs used Lucide icons; set it as the global icon library so page/group/card
+  // icon names (blocks, circle-help, layout-dashboard, mouse-pointer-click, …) render.
+  icons: { library: 'lucide' },
   logo: { light: '/logo/light.svg', dark: '/logo/dark.svg', href: 'https://novu.co' },
   navigation: nav,
   navbar: {
