@@ -1,0 +1,97 @@
+# Source: https://docs.novu.co/platform/concepts/tenants
+
+Core Concepts
+
+# Multi-tenancy Concepts in Novu
+
+Learn about how to implement multi-tenant notifications in Novu
+
+Multi-tenancy is a common use case for a lot of companies that have multiple organizations that use their applications. In some cases, there is a need to separate the behavior of the notification system depending on the individual tenants.
+
+Tenants are also commonly called workspaces or organizations.
+
+Some of the common multi-tenancy use cases are:
+
+- Group subscribers notification feeds by the tenant
+- Adjust the content of the notification depending on the tenant
+
+## [How to implement multi-tenancy in Novu](https://docs.novu.co/#how-to-implement-multi-tenancy-in-novu)
+
+Novu supports multi-tenancy out of the box, the most simple way to implement tenant separation is by prefixing the subscriber identifier with the tenant identifier
+
+```
+const subscriberId = `${tenantId}:${userId}`;
+ 
+await novu.trigger({
+  workflowId,
+  to: {
+    subscriberId,
+  },
+  payload: {
+    tenantId,
+  },
+});
+```
+
+### [Tenant in Inbox](https://docs.novu.co/#tenant-in-inbox)
+
+When using the Inbox feature, you can use the tenant identifier to group notifications by tenant.
+
+```
+import { Inbox } from "@novu/react";
+ 
+function InboxComponent({ tenantId, userId }) {
+  return <Inbox subscriber={`${tenantId}:${userId}`} />;
+}
+```
+
+Each subscriber in a tenant will have it's own unique inbox feed, including a separate preference configuration set.
+
+## [Adjusting notification content based on tenant](https://docs.novu.co/#adjusting-notification-content-based-on-tenant)
+
+When triggering a notification, you can pass a custom tenant object or identifier and use it to manipulate workflows or content.
+
+```
+const subscriberId = `${tenantId}:${userId}`;
+ 
+await novu.trigger({
+  workflowId,
+  to: {
+    subscriberId,
+  },
+  payload: {
+    tenant: {
+      id: tenantId,
+      name: "Airbnb",
+      logo: "https://airbnb.com/logo.png",
+      primaryColor: "red",
+    }
+  },
+});
+```
+
+The tenant object will be available to use in the workflow editor as a variable for the following areas:
+
+- Content (use `{{payload.tenant.name}}` to display the tenant name in an email or any other channel)
+- Step Conditions (use `{{payload.tenant.id}}` to conditionally execute a step based on the tenant)
+- Use the Inbox [data object](https://docs.novu.co/platform/inbox/configuration/data-object) to filter notifications by tenant.
+
+## [Frequently asked questions](https://docs.novu.co/#frequently-asked-questions)
+
+The following are the frequently asked questions about multi-tenancy in Novu.
+
+### [Can I use a different delivery provider for each tenant?](https://docs.novu.co/#can-i-use-a-different-delivery-provider-for-each-tenant)
+
+Currently, we do not support using a different delivery provider for each tenant. You can reach out to [support@novu.co](mailto:support@novu.co) in case this is a feature required for your use case.
+
+### [Can I specify different workflow preferences for each tenant?](https://docs.novu.co/#can-i-specify-different-workflow-preferences-for-each-tenant)
+
+We don't support specifying different workflow preferences for each tenant. You can reach out to [support@novu.co](mailto:support@novu.co) in case this is a feature required for your use case.
+
+[Preferences\\ \\ Learn how to manage subscriber preferences in Novu.](https://docs.novu.co/platform/concepts/preferences) [React\\ \\ Learn how to integrate the Novu Inbox component into a React application and add routing with React Router.](https://docs.novu.co/platform/quickstart/react)
+
+### On this page
+
+[How to implement multi-tenancy in Novu](https://docs.novu.co/#how-to-implement-multi-tenancy-in-novu) [Tenant in Inbox](https://docs.novu.co/#tenant-in-inbox) [Adjusting notification content based on tenant](https://docs.novu.co/#adjusting-notification-content-based-on-tenant) [Frequently asked questions](https://docs.novu.co/#frequently-asked-questions) [Can I use a different delivery provider for each tenant?](https://docs.novu.co/#can-i-use-a-different-delivery-provider-for-each-tenant) [Can I specify different workflow preferences for each tenant?](https://docs.novu.co/#can-i-specify-different-workflow-preferences-for-each-tenant)
+
+Copy page as markdown[Edit this page on GitHub](https://github.com/novuhq/docs/edit/main/content/docs/platform/concepts/tenants.mdx)Open in ChatGPTOpen in Claude

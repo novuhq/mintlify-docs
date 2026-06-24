@@ -1,0 +1,96 @@
+---
+title: "API Keys: Authenticate with the Novu API"
+sidebarTitle: "API Keys"
+description: "Find your Novu secret key and application identifier. Use the secret key for server API calls and the application identifier for the Inbox component."
+---
+
+Every Novu environment has two authentication credentials — a **secret key** for server-to-server API calls and an **application identifier** for client-side use with the Inbox component. Both are environment-specific, meaning your Development and Production environments have separate keys. Use the correct credentials for each environment to ensure requests are routed to the right place.
+
+## Finding Your API Keys
+
+<Steps>
+  <Step title="Log in to the Novu dashboard">
+    Go to [dashboard.novu.co](https://dashboard.novu.co) and sign in to your account.
+  </Step>
+  <Step title="Open the API Keys page">
+    In the left sidebar under the **Developer** section, click **API Keys**.
+  </Step>
+  <Step title="Copy your credentials">
+    The page displays your **Application Identifier**, **Secret Key**, and the API endpoint URLs for the currently selected environment.
+  </Step>
+</Steps>
+
+<Note>
+Make sure you have the correct environment selected (Development or Production) before copying keys. Each environment has distinct credentials.
+</Note>
+
+## Application Identifier
+
+The application identifier is a **public key** — it is safe to include in client-side code. Use it to initialize the [Novu Inbox](https://docs.novu.co/platform/inbox) component in your frontend application.
+
+```javascript
+import { NovuProvider } from "@novu/react";
+
+function App() {
+  return (
+    <NovuProvider
+      applicationIdentifier="your-application-identifier"
+      subscriberId={currentUser.id}
+    >
+      {/* Your app */}
+    </NovuProvider>
+  );
+}
+```
+
+## Secret Key
+
+The secret key is a **private credential** that authenticates all server-side API requests to Novu. Pass it when initializing the Novu SDK on your backend:
+
+```javascript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  // Required if using EU region:
+  // serverURL: "https://eu.api.novu.co",
+});
+```
+
+<Warning>
+**Never expose your secret key in client-side code**, browser extensions, mobile apps, or public repositories. It grants full administrative access to your Novu account. Treat it like a database password.
+</Warning>
+
+### Regenerating the Secret Key
+
+If your secret key is compromised, regenerate it immediately from the API Keys page. Click **Regenerate** next to the secret key — the old key is invalidated instantly. Update all services and environment variables that use the key before requests start failing.
+
+## API Endpoint URLs
+
+The following hostnames are shown on the API Keys page for reference when configuring SDKs or direct HTTP requests:
+
+| Endpoint | URL | Use |
+|----------|-----|-----|
+| **API Hostname** | `https://api.novu.co` | All API requests from your server |
+| **WebSocket Hostname** | `https://ws.novu.co` | Real-time WebSocket connections for the Inbox |
+
+For the EU region, use `https://eu.api.novu.co` and `https://ws.eu.novu.co` instead.
+
+## Security Best Practices
+
+Follow these practices to keep your credentials secure:
+
+<CardGroup cols={2}>
+  <Card title="Use environment variables" icon="lock">
+    Store your secret key in environment variables (e.g., `NOVU_SECRET_KEY`) and never hardcode it in source files.
+  </Card>
+  <Card title="Add to .gitignore" icon="git-alt">
+    Make sure your `.env` file is listed in `.gitignore` so secrets are never committed to version control.
+  </Card>
+  <Card title="Rotate keys periodically" icon="rotate">
+    Regenerate your secret key on a regular schedule or immediately after any potential exposure.
+  </Card>
+  <Card title="Limit secret key access" icon="user-shield">
+    Only backend services that need to call the Novu API should have access to the secret key.
+  </Card>
+</CardGroup>

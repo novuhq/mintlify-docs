@@ -1,0 +1,177 @@
+---
+title: "Novu Framework: Code-First Notification Workflows"
+sidebarTitle: "Introduction"
+description: "The Novu Framework lets you define notification workflows in TypeScript code, giving developers full control while exposing a no-code editor for teammates."
+---
+
+The Novu Framework is a TypeScript SDK that lets you build, manage, and version notification workflows entirely in code. You define what notifications to send, when to send them, and what they contain — all from your codebase — while non-technical teammates can edit content and styling through the Novu dashboard without ever touching a line of code.
+
+## Building Blocks
+
+Every Novu workflow is composed of three main components:
+
+<CardGroup cols={3}>
+  <Card title="Trigger" icon="bolt">
+    The event identifier that starts the workflow. Pass a unique string ID when calling `workflow()`, then use that same ID to fire the workflow via the Novu API.
+  </Card>
+  <Card title="Channel Steps" icon="paper-plane">
+    Delivery methods that send the notification: **email**, **in-app**, **SMS**, **push**, and **chat**. Each step produces content for one channel.
+  </Card>
+  <Card title="Action Steps" icon="gears">
+    Flow-control steps that run before or after channel steps: **delay**, **digest**, and **custom**. Use them to wait, batch, or run arbitrary logic.
+  </Card>
+</CardGroup>
+
+## Your First Workflow
+
+The `workflow()` function is the entry point for every Novu Framework workflow. Pass it a unique identifier, an async handler that receives `step` and `payload`, and an optional options object.
+
+```typescript
+import { workflow } from '@novu/framework';
+
+workflow('sample-workflow', async (step) => {
+  await step.delay('delay', async () => {
+    return {
+      unit: 'days',
+      amount: 1,
+    };
+  });
+
+  await step.email('email-step', async () => {
+    return {
+      subject: 'Welcome to Novu',
+      body: 'Hello, welcome to Novu!',
+    };
+  });
+});
+```
+
+This workflow waits one day, then sends a welcome email. Novu's durable execution engine handles scheduling and delivery — you just describe the steps.
+
+## Just-in-Time Data Fetching
+
+You can run any asynchronous logic inside a step handler, including database queries. This **just-in-time** pattern means you never have to pre-populate Novu with all of your subscriber data — fetch it at the moment the step executes.
+
+```typescript
+import { workflow } from '@novu/framework';
+
+const myWorkflow = workflow(
+  'new-signup',
+  async ({ step, payload }) => {
+    await step.email('send-email', async () => {
+      const user = await db.getUser(payload.userId);
+      return {
+        subject: `Welcome to Acme ${user.productTier} tier, ${user.name}`,
+        body: 'We look forward to helping you achieve your mission.',
+      };
+    });
+  },
+  { payloadSchema: { type: 'object', properties: { userId: { type: 'string' } }, required: ['userId'], additionalProperties: false } as const }
+);
+```
+
+## Multi-Step Workflow Example
+
+Combine channel steps and action steps to build sophisticated notification sequences. The example below sends an onboarding email immediately, waits one week, and then sends an in-app follow-up — but only if the user requested it.
+
+```typescript
+import { workflow } from '@novu/framework';
+
+const myWorkflow = workflow(
+  'new-signup',
+  async ({ step, payload }) => {
+    await step.email('send-email', async () => {
+      const user = await db.getUser(payload.userId);
+      return {
+        subject: `Welcome to Acme ${user.productTier} tier, ${user.name}`,
+        body: 'We look forward to helping you achieve your mission.',
+      };
+    });
+
+    await step.delay('onboarding-follow-up', async () => ({
+      amount: 1,
+      unit: 'weeks',
+    }));
+
+    await step.inApp(
+      'follow-up-inbox',
+      async (controls) => {
+        const user = await db.getUser(payload.userId);
+        return {
+          body: `Hey ${user.name}! How are you liking the product? Let us know <a href="${controls.feedbackUrl}">here</a>.`,
+        };
+      },
+      {
+        skip: () => !payload.shouldFollowUp,
+        controlSchema: {
+          type: 'object',
+          properties: {
+            feedbackUrl: {
+              type: 'string',
+              format: 'uri',
+              default: 'https://acme.com/feedback',
+            },
+          },
+          required: ['feedbackUrl'],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+  },
+  {
+    payloadSchema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string' },
+        shouldFollowUp: { type: 'boolean', default: true },
+      },
+      required: ['userId', 'shouldFollowUp'],
+      additionalProperties: false,
+    } as const,
+  }
+);
+```
+
+<Tip>
+  Use the `controlSchema` option on any step to expose editable fields in the Novu dashboard. Non-technical teammates can then change subject lines, button copy, and URLs without modifying your code. See [Controls](/framework/controls) for the full guide.
+</Tip>
+
+## Workflow Tags
+
+Tags categorize workflows and let you group notifications into [Inbox](https://docs.novu.co/platform/inbox/configuration/tabs) tabs for your users.
+
+```typescript
+import { workflow } from '@novu/framework';
+
+workflow(
+  'acme-login-alert',
+  async ({ step }) => {
+    await step.inApp('inbox', async () => {
+      return {
+        subject: 'New Login Detected',
+        body: "We noticed a login from a new device or location. If this wasn't you, change your password immediately.",
+      };
+    });
+  },
+  {
+    tags: ['security'],
+  }
+);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/framework/quickstart">
+    Install the package, create a workflow, expose the Bridge endpoint, and trigger your first notification in under 10 minutes.
+  </Card>
+  <Card title="Steps & Channels" icon="layer-group" href="/framework/steps-and-channels">
+    Explore all available channel and action step types with full code examples.
+  </Card>
+  <Card title="Controls" icon="sliders" href="/framework/controls">
+    Learn how to expose no-code editing fields to non-technical teammates via the Novu dashboard.
+  </Card>
+  <Card title="Payload" icon="database" href="/framework/payload">
+    Validate the data your application sends when triggering a workflow.
+  </Card>
+</CardGroup>

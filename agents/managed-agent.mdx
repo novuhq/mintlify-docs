@@ -1,0 +1,87 @@
+---
+title: "Managed Agent: Claude-Powered AI Assistant"
+sidebarTitle: "Managed Agent"
+description: "Set up a fully managed AI agent powered by Claude. Configure system prompts, skills, and MCP servers without writing custom server code."
+---
+
+A managed agent lets you connect an AI platform directly to your Novu agent without writing backend handler code. You configure credentials, a system prompt, tools, and external connections in the Novu dashboard — the platform handles the reasoning, planning, and tool use. Connect a chat provider like Slack and your agent is ready to talk to users immediately.
+
+<Note>
+  Novu Agents is currently in private beta. Contact [support@novu.co](mailto:support@novu.co) to request access.
+</Note>
+
+## How it works
+
+<Steps>
+  <Step title="User sends a message">
+    A user sends a message on a connected provider (Slack, Microsoft Teams, WhatsApp, email, or another supported channel).
+  </Step>
+  <Step title="Novu resolves context">
+    Novu receives the message, resolves identity and conversation state, and forwards the full context to the AI platform.
+  </Step>
+  <Step title="Platform processes the message">
+    The AI platform processes the message using its built-in tools (bash, file operations, web search, grep), any MCP servers you enabled, and any custom skills you uploaded.
+  </Step>
+  <Step title="Novu delivers the reply">
+    Novu delivers the response back to the same thread on the provider and records the conversation in the dashboard.
+  </Step>
+</Steps>
+
+## What you configure
+
+Setting up a managed agent involves five pieces, all configured from the Novu dashboard:
+
+| Component | Description |
+|-----------|-------------|
+| **Connector** | The AI platform that powers the agent. Claude is available today; OpenAI and AWS Bedrock are coming soon. Provide your own API credentials or use Novu demo credentials to start. |
+| **System prompt** | Instructions that tell the agent who it is, how to respond, and what to avoid. |
+| **Built-in tools** | Bash, file read/write/edit, glob, grep, web search, and web fetch are provided by the platform and available out of the box. |
+| **MCP servers** | External integrations like Linear, GitHub, Slack, and Notion that you enable from the dashboard. Some require end-user OAuth authorization. |
+| **Custom skills** | SKILL.md instruction files you upload from a GitHub URL or paste inline to teach the agent domain-specific workflows. |
+
+## Create a managed agent
+
+Use the Novu CLI for the fastest setup path:
+
+```bash
+npx novu connect
+```
+
+The CLI walks you through choosing a connector, describing your agent, and connecting a chat provider. See the [Quickstart](/agents/quickstart) for the full walkthrough.
+
+## When to use a managed agent
+
+Use a managed agent when:
+
+- You want to get an agent running quickly without writing backend code.
+- You need built-in tool use, streaming, and chain-of-thought reasoning without implementing it yourself.
+- You're comfortable delegating model selection and execution to the managed platform.
+
+<Tip>
+  If you need full control over agent logic, want to call your own APIs directly in handlers, or need complex multi-step business flows, use a [custom code agent](/agents/custom-code-agent) instead.
+</Tip>
+
+## Supported connectors
+
+| Connector | Status |
+|-----------|--------|
+| Claude (Anthropic) | Available |
+| OpenAI | Coming soon |
+| AWS Bedrock | Coming soon |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/agents/quickstart">
+    Create a managed agent with Claude and connect it to Slack in under 5 minutes.
+  </Card>
+  <Card title="Skills" icon="toolbox" href="/agents/skills">
+    Upload custom SKILL.md files to teach the agent new workflows.
+  </Card>
+  <Card title="MCP Servers" icon="plug" href="/agents/mcp-servers">
+    Enable external tools like Linear, GitHub, and Notion.
+  </Card>
+  <Card title="Conversations" icon="comments" href="/agents/conversations">
+    View and manage agent conversations from the dashboard.
+  </Card>
+</CardGroup>

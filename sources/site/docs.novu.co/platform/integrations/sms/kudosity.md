@@ -1,0 +1,36 @@
+# Source: https://docs.novu.co/platform/integrations/sms/kudosity
+
+[SMS](https://docs.novu.co/platform/integrations/sms)/Providers
+
+# Kudosity SMS Provider
+
+Learn how to use the Kudosity (formerly BurstSMS) provider to send sms notifications using Novu
+
+You can use the [Kudosity (formerly BurstSMS)](https://kudosity.com/) provider to send SMS messages to the customers using the Novu Platform with a single API to create multi-channel experiences.
+
+## [Getting Started](https://docs.novu.co/#getting-started)
+
+To use Kudosity provider in the SMS channel, the first step is to create an Kudosity account and add the personal Kudosity API key and your Kudosity API Secret to the Kudosity integration on the Novu platform.
+
+## [Find the API and Secret key](https://docs.novu.co/#find-the-api-and-secret-key)
+
+To find the Kudosity API and Secret key, log into the personal Kudosity account and navigate to the API Keys section tab present at the end of the Navbar. It is suggested to create a new API and Secret key for use with Novu. Copy the newly created API and Secret key.
+
+## [Creating a Kudosity integration with Novu](https://docs.novu.co/#creating-a-kudosity-integration-with-novu)
+
+- Visit the [Integrations](https://dashboard.novu.co/integrations?utm_campaign=docs-sms-burstsms) page on Novu.
+- Click the "Add a provider" button.
+- Locate **Kudosity (formerly BurstSMS)** under the SMS section and click on the **Next** button.
+- Select Your Environment add condition (Optional)
+- Click on the `Disabled` button and mark it as `Active`.
+- Enter the `API key` and `API Secret`.
+- Click on the **Upload** button.
+- Now it is possible to send SMS notifications using **Kudosity** in Novu.
+
+[Kannel\\ \\ Learn how to use the Kannel sms provider to send sms notifications using Novu](https://docs.novu.co/platform/integrations/sms/kannel) [MessageBird\\ \\ Learn how to use the messagebird provider to send sms notifications using Novu](https://docs.novu.co/platform/integrations/sms/messagebird)
+
+### On this page
+
+[Getting Started](https://docs.novu.co/#getting-started) [Find the API and Secret key](https://docs.novu.co/#find-the-api-and-secret-key) [Creating a Kudosity integration with Novu](https://docs.novu.co/#creating-a-kudosity-integration-with-novu)
+
+Copy page as markdown[Edit this page on GitHub](https://github.com/novuhq/docs/edit/main/content/docs/platform/integrations/sms/(providers)/kudosity.mdx)Open in ChatGPTOpen in Claude

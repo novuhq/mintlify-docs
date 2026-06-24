@@ -1,0 +1,207 @@
+---
+title: "Framework Controls: No-Code Editing for Teammates"
+sidebarTitle: "Controls"
+description: "Expose editable fields in the Novu dashboard for non-technical users. Define a controlSchema on any workflow step to enable no-code content editing."
+---
+
+Controls bridge the gap between your TypeScript workflow code and the non-technical teammates who manage notification content. When you define a `controlSchema` on a step, those fields appear as an editable form in the Novu dashboard — allowing marketers, product managers, and designers to change subject lines, body copy, button text, and styling without touching your codebase.
+
+<Info>
+  Controls are defined by developers in code and edited by anyone in the Novu dashboard. They are persisted in Novu so that the last saved values are always used at runtime.
+</Info>
+
+## Controls vs Payload
+
+Before diving in, understand the distinction between the two schema types:
+
+| | Controls | Payload |
+|---|---|---|
+| **Defined by** | Developer (in code) | Developer (in code) |
+| **Edited by** | Non-technical teammates via the Novu dashboard | Developers via `novu.trigger()` |
+| **Scope** | Per workflow step | Per workflow trigger |
+| **Purpose** | Static content, styling, and behavior | Dynamic runtime data |
+
+Use **controls** for things that change occasionally (email subject templates, button labels, feature flags). Use **payload** for things that change every trigger (user names, order IDs, event-specific data).
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Content" icon="pen">
+    Edit email subject lines, body copy, push notification titles, and SMS messages.
+  </Card>
+  <Card title="Styling" icon="palette">
+    Adjust button colors, background colors, font sizes, and layout options.
+  </Card>
+  <Card title="Behavior" icon="toggle-on">
+    Show or hide sections, buttons, or banners based on a toggle.
+  </Card>
+  <Card title="Actions" icon="clock">
+    Configure digest durations or delay amounts without a code deploy.
+  </Card>
+</CardGroup>
+
+## Defining a Control Schema
+
+Add a `controlSchema` to the options object of any step. The schema can be a **Zod schema**, a **JSON Schema object**, or a **Class-Validator** class. The controls object is then passed as the first argument to your step resolver function.
+
+<CodeGroup>
+  ```typescript Zod Schema
+  import { z } from 'zod';
+  import { render } from 'react-email';
+  import { ReactEmailContent } from './ReactEmailContent';
+
+  workflow('new-signup', async ({ step, payload }) => {
+    await step.email(
+      'send-email',
+      async (controls) => {
+        return {
+          subject: controls.subject,
+          body: render(
+            <ReactEmailContent
+              hideBanner={controls.hideBanner}
+              components={controls.components}
+            />
+          ),
+        };
+      },
+      {
+        controlSchema: z.object({
+          hideBanner: z.boolean().default(false),
+          subject: z.string().default('Hi {{subscriber.firstName | capitalize}}'),
+          components: z.array(
+            z.object({
+              type: z.enum(['header', 'cta-row', 'footer']),
+              content: z.string(),
+            })
+          ),
+        }),
+      }
+    );
+  });
+  ```
+
+  ```typescript JSON Schema
+  workflow('new-signup', async ({ step, payload }) => {
+    await step.email(
+      'send-email',
+      async (controls) => {
+        return {
+          subject: controls.subject,
+          body: `<p>${controls.body}</p>`,
+        };
+      },
+      {
+        controlSchema: {
+          type: 'object',
+          properties: {
+            subject: {
+              type: 'string',
+              default: 'Hi {{subscriber.firstName | capitalize}}',
+            },
+            body: {
+              type: 'string',
+              default: 'Welcome to our platform!',
+            },
+            hideBanner: {
+              type: 'boolean',
+              default: false,
+            },
+          },
+          required: ['subject', 'body'],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+  });
+  ```
+</CodeGroup>
+
+<Tip>
+  If you don't provide a `controlSchema`, TypeScript infers the `controls` argument type as `unknown`. Always define a schema to get full type safety and IDE autocompletion.
+</Tip>
+
+## Supported Validation Libraries
+
+Novu Framework compiles all schemas down to JSON Schema internally, so you get consistent validation and a consistent dashboard experience regardless of which library you choose:
+
+| Library | Import | Notes |
+|---|---|---|
+| **Zod** | `import { z } from 'zod'` | TypeScript-first. Novu supports Zod v3. |
+| **JSON Schema** | Native object literal | Most portable. Use `as const` for inference. |
+| **Class-Validator** | `import { IsString } from 'class-validator'` | OOP-style with decorators. Check [class-validator-jsonschema](https://www.npmjs.com/package/class-validator-jsonschema) for nested schema caveats. |
+
+## Using Variables in Control Values
+
+Control values support **Liquid template syntax** using `{{variableName}}`. Variables are resolved at send time against the actual subscriber and payload data. The Novu dashboard provides autocompletion: start typing `{{` to see available variables.
+
+### Available Variable Namespaces
+
+- **Subscriber attributes** — `{{subscriber.firstName}}`, `{{subscriber.email}}`, `{{subscriber.phone}}`
+- **Payload variables** — `{{payload.orderId}}`, `{{payload.amount}}` (any field you define in `payloadSchema`)
+- **Liquid filters** — chain filters to format values at runtime
+
+```
+# Examples of variable expressions in control default values
+
+{{subscriber.firstName | capitalize}}
+{{subscriber.firstName | append: ': ' | append: payload.status | capitalize}}
+{{payload.invoiceDate | date: '%a, %b %d, %y'}}
+```
+
+## Full Marketing Email Example
+
+Here is a complete workflow showing editable subject, body sections, and a feature flag for hiding a promotional banner:
+
+```typescript
+import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const marketingEmailWorkflow = workflow(
+  'marketing-email',
+  async ({ step, payload }) => {
+    await step.email(
+      'marketing-body',
+      async (controls) => {
+        const sections = controls.sections
+          .map((section) => `<section><h2>${section.heading}</h2><p>${section.body}</p></section>`)
+          .join('\n');
+
+        const banner = controls.showBanner
+          ? `<div class="banner">${controls.bannerText}</div>`
+          : '';
+
+        return {
+          subject: controls.subject,
+          body: `${banner}${sections}`,
+        };
+      },
+      {
+        controlSchema: z.object({
+          subject: z
+            .string()
+            .default("What's new at Acme — {{payload.month}}"),
+          showBanner: z.boolean().default(true),
+          bannerText: z.string().default('🎉 New features just dropped!'),
+          sections: z
+            .array(
+              z.object({
+                heading: z.string(),
+                body: z.string(),
+              })
+            )
+            .default([
+              { heading: 'Headline', body: 'Your update goes here.' },
+            ]),
+        }),
+      }
+    );
+  },
+  {
+    payloadSchema: z.object({
+      month: z.string(),
+    }),
+  }
+);
+```
+
+Once synced to the Novu dashboard, a teammate can open the workflow editor and adjust the subject, toggle the banner, and edit every section — no deployment needed.

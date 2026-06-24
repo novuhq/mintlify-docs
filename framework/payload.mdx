@@ -1,0 +1,171 @@
+---
+title: "Framework Payload: Passing Data to Workflows"
+sidebarTitle: "Payload"
+description: "Define and validate the data your application sends when triggering a Novu Framework workflow. Use payloadSchema to enforce payload structure."
+---
+
+The workflow payload is the dynamic data your application provides each time it triggers a workflow. It carries context specific to that notification event — things like a user ID, a commenter's name, an order number, or a URL. Define a `payloadSchema` to validate this data at the point of trigger and surface any problems before the workflow executes.
+
+## Payload vs Controls
+
+It's worth understanding how payload differs from [controls](/framework/controls):
+
+| | Payload | Controls |
+|---|---|---|
+| **Set by** | Your application at trigger time | Non-technical teammates in the Novu dashboard |
+| **Changes** | Every trigger | Occasionally, without a code deploy |
+| **Examples** | User name, order ID, comment text | Email subject template, button label, banner toggle |
+
+Use payload for data that is **dynamic and event-specific**. Use controls for data that is **semi-static and editable by non-developers**.
+
+## Defining a Payload Schema
+
+Pass a `payloadSchema` in the workflow options object. The schema validates the payload provided in `novu.trigger()`. Use either a **JSON Schema** object or a **Zod** schema.
+
+<CodeGroup>
+  ```typescript JSON Schema
+  import { workflow } from '@novu/framework';
+  import { render } from '@react-email/components';
+  import { ReactEmailContent } from './ReactEmailContent';
+
+  workflow(
+    'comment-on-post',
+    async ({ step, payload }) => {
+      await step.email('send-email', async () => {
+        return {
+          subject: `You have a new comment from: ${payload.author_name}.`,
+          body: render(<ReactEmailContent comment={payload.comment} />),
+        };
+      });
+    },
+    {
+      payloadSchema: {
+        // Always `object` at the top level
+        type: 'object',
+        properties: {
+          post_id: { type: 'number' },
+          author_name: { type: 'string' },
+          comment: { type: 'string', maxLength: 200 },
+        },
+        // List all required fields
+        required: ['post_id', 'comment'],
+        // Reject unknown extra properties
+        additionalProperties: false,
+      } as const,
+    }
+  );
+  ```
+
+  ```typescript Zod Schema
+  import { workflow } from '@novu/framework';
+  import { z } from 'zod';
+
+  workflow(
+    'comment-on-post',
+    async ({ step, payload }) => {
+      await step.email('send-email', async () => {
+        return {
+          subject: `You have a new comment from: ${payload.author_name}.`,
+          body: `<p>${payload.comment}</p>`,
+        };
+      });
+    },
+    {
+      payloadSchema: z.object({
+        post_id: z.number(),
+        author_name: z.string(),
+        comment: z.string().max(200),
+      }),
+    }
+  );
+  ```
+</CodeGroup>
+
+<Tip>
+  Add `as const` after JSON Schema object literals so TypeScript can infer the exact types and provide autocompletion on `payload` inside your step handlers.
+</Tip>
+
+## Accessing Payload in Steps
+
+Destructure `payload` from the workflow handler arguments. It is fully typed based on your `payloadSchema`, giving you IDE autocompletion and compile-time safety.
+
+```typescript
+import { workflow } from '@novu/framework';
+
+workflow(
+  'new-signup',
+  async ({ step, payload }) => {
+    await step.email('welcome-email', async () => {
+      // `payload.name` is typed as `string`
+      return {
+        subject: `Welcome to Acme, ${payload.name}!`,
+        body: 'We are excited to have you on board.',
+      };
+    });
+
+    await step.inApp('welcome-inbox', async () => {
+      return {
+        subject: 'Account created',
+        body: `Hello ${payload.name}, your account is ready.`,
+      };
+    });
+  },
+  {
+    payloadSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+      },
+      required: ['name'],
+      additionalProperties: false,
+    } as const,
+  }
+);
+```
+
+## Triggering with Payload
+
+Pass the payload in the `novu.trigger()` call. Novu validates it against your `payloadSchema` before executing the workflow.
+
+```typescript
+// Server-side trigger using the Novu Node.js SDK
+await novu.trigger({
+  workflowId: 'comment-on-post',
+  to: { subscriberId: 'subscriber_id' },
+  payload: {
+    post_id: 1234,
+    author_name: 'John Doe',
+    comment: 'Looks great!',
+  },
+});
+```
+
+Or trigger via the REST API directly:
+
+```bash
+curl -X POST https://api.novu.co/v1/events/trigger \
+  -H 'Authorization: ApiKey <YOUR_API_KEY>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "comment-on-post",
+    "to": { "subscriberId": "subscriber_id" },
+    "payload": {
+      "post_id": 1234,
+      "author_name": "John Doe",
+      "comment": "Looks great!"
+    }
+  }'
+```
+
+## Validation Errors
+
+If the trigger payload fails schema validation, Novu rejects the trigger and returns an error response. The workflow does not execute. Common reasons for validation failure:
+
+- A `required` field is missing from the payload
+- A field value does not match its declared type (e.g., a string where a number is expected)
+- `additionalProperties: false` is set and the payload includes unrecognized keys
+- A string exceeds its `maxLength` constraint
+
+<Warning>
+  Always validate and sanitize payload data in your application before calling `novu.trigger()`. The `payloadSchema` is your last line of defense, but catching errors early makes debugging easier.
+</Warning>

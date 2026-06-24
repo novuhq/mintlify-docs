@@ -1,0 +1,150 @@
+---
+title: "Workflow Steps: Channel and Action Types"
+sidebarTitle: "Steps"
+description: "Understand the building blocks of Novu workflows. Add email, in-app, SMS, push, and chat steps, plus delay and digest action steps."
+---
+
+Steps are the building blocks of a Novu workflow. Each step represents a distinct action or delivery mechanism — determining what happens, when it happens, and how a notification is delivered to a subscriber. You define and arrange steps visually in the Workflow Editor, where each node on the canvas represents a single step in the execution flow.
+
+Novu supports two categories of steps: **channel steps** that deliver notifications, and **action steps** that control flow and timing.
+
+<Note>
+  Each step operates independently. If one step fails, other steps in the workflow can still succeed.
+</Note>
+
+## Channel Steps
+
+Channel steps deliver notifications to users through supported communication channels. Each channel step includes its own template editor for defining notification content and channel-specific behavior.
+
+<CardGroup cols={2}>
+  <Card title="Email" icon="envelope" href="https://docs.novu.co/platform/integrations/email">
+    Send notifications to subscribers' email addresses. Supports layouts, visual block editing, custom HTML, and dynamic data.
+  </Card>
+  <Card title="In-App" icon="bell" href="/inbox/overview">
+    Deliver notifications directly inside your application through the Novu `<Inbox />` component.
+  </Card>
+  <Card title="Push" icon="mobile" href="https://docs.novu.co/platform/integrations/push">
+    Send notifications to user devices — mobile, desktop, or web.
+  </Card>
+  <Card title="SMS" icon="message-sms" href="https://docs.novu.co/platform/integrations/sms">
+    Send text notifications to subscribers' phone numbers.
+  </Card>
+  <Card title="Chat" icon="comments" href="https://docs.novu.co/platform/integrations/chat">
+    Send notifications to chat platforms such as Slack or Microsoft Teams.
+  </Card>
+</CardGroup>
+
+<Warning>
+  To send notifications through Email, Push, Chat, or SMS, you must configure the appropriate [channel provider integration](https://docs.novu.co/platform/integrations) for your environment. Without an active integration, messages sent through that channel won't be delivered. Novu provides built-in [demo integrations](https://docs.novu.co/platform/integrations/demo-integration) for Email and SMS to help you test workflows before configuring a provider.
+</Warning>
+
+## Action Steps
+
+Action steps introduce logic and flow control into a workflow. They do not send notifications directly — instead, they affect when and how downstream steps execute. Place action steps before or between channel steps to shape delivery behavior.
+
+### Delay
+
+The Delay step pauses workflow execution for a specified duration before continuing to the next step. Use it whenever timing matters — whether you need to wait a fixed amount of time, resume at a scheduled moment, or defer execution based on payload data.
+
+**Common use cases:**
+- Wait 15 minutes before sending a push notification, in case the user already saw the in-app notification
+- Send a reminder email 24 hours after a user abandons their shopping cart
+- Follow up 3 days after registration to check if the user needs onboarding help
+
+**How Delay works:**
+
+1. When the workflow reaches the Delay step, execution pauses for the configured duration.
+2. Once the delay condition is met, the workflow continues to the next step.
+3. All downstream steps execute normally.
+
+Steps placed **before** the Delay step run immediately. Steps placed **after** run only after the delay completes. See [Delay Step](/workflows/delay) for configuration details.
+
+### Digest
+
+The Digest step batches multiple workflow trigger events into a single execution. Instead of running the workflow once per event, Digest collects events over a time window, groups them per subscriber, and then allows the workflow to continue once when the window closes.
+
+**Common use cases:**
+- Replace many similar notifications with a single summary (e.g., "5 new comments on your post")
+- Prevent over-notifying users during bursts of activity
+- Deliver notifications on a fixed cadence (daily or weekly digests)
+
+**How Digest works:**
+
+1. Workflow trigger events are collected instead of flowing downstream immediately.
+2. Events are grouped per subscriber (and an optional grouping key).
+3. Once the digest window closes, the workflow continues once with all aggregated events available as context.
+
+Steps placed **before** the Digest step run in real time. Steps placed **after** run only when the digest window completes. See [Digest Step](/workflows/digest) for configuration details.
+
+### Throttle
+
+The Throttle step limits the number of workflow executions for a subscriber within a specified time window. If the execution count exceeds the configured threshold, the workflow halts at the throttle step and no downstream steps run.
+
+**Common use cases:**
+- Limit high-frequency alerts (e.g., CPU usage checks) to one notification per hour
+- Prevent duplicate messages from automated cron jobs
+- Control notification frequency for subscribers in multiple contexts
+
+<Note>
+  Throttling applies to all workflows, including critical ones. Subscribers are never shown that throttling occurred — they either receive the notification or they don't.
+</Note>
+
+### HTTP
+
+The HTTP step lets a workflow call an external API during execution. Use it to fetch additional data, enrich notification content, or ping an external system — all without custom infrastructure.
+
+**Common use cases:**
+- Fetch user or event data from your database to personalize a notification
+- Check whether a user has an active subscription before sending a promotional email
+- Notify an observability tool with workflow execution context
+
+When the HTTP step runs, Novu executes the configured request, stores the response as a step result, and makes that data available to downstream steps and conditions via LiquidJS.
+
+## Add a Step to a Workflow
+
+<Steps>
+  <Step title="Open the Workflow Editor">
+    Go to the [Novu Dashboard](https://dashboard.novu.co), navigate to **Workflows**, and click the workflow you want to edit.
+  </Step>
+  <Step title="Click the Add Step icon">
+    Click the **+** icon at the position in the workflow where you want to insert a step.
+  </Step>
+  <Step title="Choose a step type">
+    Select the step type from the panel — channel step (Email, In-App, SMS, Push, Chat) or action step (Delay, Digest, Throttle, HTTP).
+  </Step>
+  <Step title="Configure the step">
+    Fill in the step's template or configuration options. For channel steps, use the template editor to define notification content. For action steps, set the timing or logic parameters.
+  </Step>
+</Steps>
+
+You can add multiple steps and reorder them at any time to change the execution flow.
+
+## How Steps Execute
+
+When a workflow is triggered, steps execute **sequentially from top to bottom**. Each step receives the same workflow payload, and a step must complete before the next one begins.
+
+This sequential model lets you build sophisticated notification sequences:
+
+1. Send an in-app message immediately.
+2. Wait 24 hours (Delay).
+3. If the in-app message is unread, send an email.
+4. If the subscriber is a premium user, follow up with an SMS.
+
+Step conditions let you add branching logic — for example, skipping a step based on payload data or subscriber attributes.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Digest Step" icon="layer-group" href="/workflows/digest">
+    Batch multiple events into a single aggregated notification.
+  </Card>
+  <Card title="Delay Step" icon="clock" href="/workflows/delay">
+    Pause a workflow for a set duration before sending the next message.
+  </Card>
+  <Card title="Trigger a Workflow" icon="play" href="/workflows/triggers">
+    Learn how to trigger a workflow from your application via the API or SDK.
+  </Card>
+  <Card title="Workflow Preferences" icon="sliders" href="/workflows/preferences">
+    Configure default channel preferences and critical workflow settings.
+  </Card>
+</CardGroup>

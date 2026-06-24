@@ -1,0 +1,218 @@
+---
+title: "POST /v1/events/trigger — Trigger a Workflow"
+sidebarTitle: "Trigger Event"
+description: "Trigger a Novu workflow to send a notification. Pass the workflow identifier, subscriber, and optional payload. Returns a transactionId on success."
+---
+
+Triggering an event is the primary way to send notifications to subscribers. You provide the workflow identifier and the recipient(s), and Novu routes the notification through all active steps in the workflow — email, SMS, in-app, push, chat, and so on. The maximum number of recipients per request is 100.
+
+To prevent duplicate triggers, pass a `transactionId` in the request body. If the same `transactionId` is sent again, the trigger is ignored. The deduplication retention period depends on your billing tier.
+
+```
+POST https://api.novu.co/v1/events/trigger
+```
+
+## Request
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | ✅ | `ApiKey YOUR_SECRET_KEY` |
+| `Content-Type` | ✅ | `application/json` |
+| `Idempotency-Key` | — | A unique key to prevent duplicate processing. See [Idempotency](/api-reference/idempotency). |
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  The trigger identifier of the workflow you want to send. Find this identifier on the workflow's detail page in the Novu dashboard.
+</ParamField>
+
+<ParamField body="to" type="string | object | array" required>
+  The recipient or recipients of the notification. Accepts a single `subscriberId` string, a subscriber object, or an array of up to 100 subscriber IDs or objects.
+
+  Pass a `subscriberId` string to send to an existing subscriber:
+  ```json
+  "to": "user-123"
+  ```
+
+  Pass a subscriber object to create or update the subscriber inline:
+  ```json
+  "to": {
+    "subscriberId": "user-123",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com"
+  }
+  ```
+
+  Pass an array to send to multiple recipients (max 100):
+  ```json
+  "to": ["user-123", "user-456"]
+  ```
+</ParamField>
+
+<ParamField body="payload" type="object">
+  Key-value data passed to the workflow for template rendering, routing rules, and display in the notification feed.
+
+  ```json
+  "payload": {
+    "orderId": "order-789",
+    "amount": 49.99
+  }
+  ```
+</ParamField>
+
+<ParamField body="transactionId" type="string">
+  A unique identifier for deduplication. If the same `transactionId` is submitted again, Novu ignores the duplicate trigger. Use this to prevent double-sends on retry. If omitted, Novu generates one and returns it in the response.
+</ParamField>
+
+<ParamField body="overrides" type="object">
+  Provider-specific configuration overrides. Use this to override delivery settings for a specific channel provider.
+
+  ```json
+  "overrides": {
+    "fcm": {
+      "data": { "key": "value" }
+    }
+  }
+  ```
+</ParamField>
+
+<ParamField body="actor" type="string | object">
+  The subscriber ID or object representing the entity who triggered the notification. Used to display an avatar or sender identity in notification UIs. If a new actor object is provided, Novu creates a new subscriber.
+</ParamField>
+
+<ParamField body="tenant" type="string | object">
+  A tenant identifier string or tenant object to scope this trigger to a specific tenant context. If a new tenant object is provided, Novu creates a new tenant record.
+</ParamField>
+
+## Response
+
+Returns `201 Created` on success.
+
+<ResponseField name="acknowledged" type="boolean" required>
+  Indicates whether the trigger was acknowledged by Novu.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  The processing status of the trigger. One of:
+  - `processed` — Trigger was accepted and is being processed.
+  - `trigger_not_active` — The workflow is not active.
+  - `no_workflow_active_steps_defined` — The workflow has no active steps.
+  - `no_workflow_steps_defined` — The workflow has no steps.
+  - `no_tenant_found` — The specified tenant does not exist.
+  - `invalid_recipients` — One or more recipients are invalid.
+  - `error` — An error occurred. Check the `error` field.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  The transaction ID for this trigger. Use this value to cancel, debug, or deduplicate future requests.
+</ResponseField>
+
+<ResponseField name="activityFeedLink" type="string">
+  A direct link to the activity feed entry for this trigger in the Novu dashboard.
+</ResponseField>
+
+<ResponseField name="error" type="array">
+  An array of error message strings, present only when `status` is `error`.
+</ResponseField>
+
+## Code examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.novu.co/v1/events/trigger" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "name": "order-confirmation",
+    "to": {
+      "subscriberId": "user-123",
+      "firstName": "Jane",
+      "email": "jane@example.com"
+    },
+    "payload": {
+      "orderId": "order-789",
+      "amount": 49.99
+    },
+    "transactionId": "txn-order-789-20240601"
+  }'
+```
+
+```javascript JavaScript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+const response = await novu.events.trigger({
+  workflowId: 'order-confirmation',
+  to: {
+    subscriberId: 'user-123',
+    firstName: 'Jane',
+    email: 'jane@example.com',
+  },
+  payload: {
+    orderId: 'order-789',
+    amount: 49.99,
+  },
+  transactionId: 'txn-order-789-20240601',
+});
+
+console.log(response.transactionId);
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v1/events/trigger"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "name": "order-confirmation",
+    "to": {
+        "subscriberId": "user-123",
+        "firstName": "Jane",
+        "email": "jane@example.com",
+    },
+    "payload": {
+        "orderId": "order-789",
+        "amount": 49.99,
+    },
+    "transactionId": "txn-order-789-20240601",
+}
+
+response = requests.post(url, headers=headers, json=payload)
+print(response.json())
+```
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "acknowledged": true,
+  "status": "processed",
+  "transactionId": "txn-order-789-20240601",
+  "activityFeedLink": "https://dashboard.novu.co/activity/..."
+}
+```
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Bulk Trigger" icon="layer-group" href="/api-reference/bulk-trigger">
+    Trigger up to 100 events in a single API call.
+  </Card>
+  <Card title="Idempotency" icon="rotate" href="/api-reference/idempotency">
+    Prevent duplicate notifications when retrying requests.
+  </Card>
+  <Card title="Subscribers" icon="users" href="/api-reference/subscribers">
+    Manage subscriber records before triggering events.
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api-reference/rate-limiting">
+    Understand per-plan limits for the Events category.
+  </Card>
+</CardGroup>

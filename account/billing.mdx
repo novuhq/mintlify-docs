@@ -1,0 +1,116 @@
+---
+title: "Novu Plans and Billing Overview"
+sidebarTitle: "Billing"
+description: "Understand Novu's pricing tiers, what's included in the free plan, and how to upgrade to access advanced features and higher event limits."
+---
+
+Novu offers a free tier that lets you get started without a credit card, plus paid plans that unlock higher event volumes, advanced features, and dedicated support. This page explains what's included in each tier, what counts toward usage, and how to manage your subscription from the dashboard.
+
+## Plans Overview
+
+<CardGroup cols={2}>
+  <Card title="Free" icon="gift">
+    Start building with no credit card required. Includes core notification channels, workflows, and a generous monthly event quota.
+  </Card>
+  <Card title="Team" icon="users">
+    For growing teams. Adds custom environments, role-based access control, outbound webhooks, and higher event limits.
+  </Card>
+  <Card title="Enterprise" icon="building">
+    For large-scale deployments. Includes SSO/SAML, SCIM provisioning, dedicated SLAs, and custom event volumes.
+  </Card>
+  <Card title="Self-hosted" icon="server">
+    Run Novu on your own infrastructure. The open-source codebase is freely available on GitHub.
+  </Card>
+</CardGroup>
+
+For current pricing and a full feature comparison, see [novu.co/pricing](https://novu.co/pricing).
+
+## What Counts as an Event?
+
+Novu counts **events** toward your plan quota. An event is triggered each time you call the Novu [Trigger Event API](https://docs.novu.co/api-reference/events/trigger-event), regardless of how many notification channels or subscribers the workflow targets.
+
+<Note>
+Check [novu.co/pricing](https://novu.co/pricing) for the exact event limits on each plan, as they are updated from time to time.
+</Note>
+
+## Free Plan
+
+The free plan is designed to help you build and ship your first notification workflows without any upfront commitment. It includes:
+
+- Access to all notification channels (Email, SMS, Push, Chat, In-App Inbox)
+- Workflow editor with full step types
+- Development and Production environments
+- Activity feed and delivery logs
+- Community support
+
+<Tip>
+Novu provides **Demo integrations** for Email and SMS on the free tier so you can test end-to-end delivery without connecting a real provider. Switch to a live provider when you are ready to send to real subscribers.
+</Tip>
+
+## Team Plan
+
+The Team plan adds the features that growing engineering teams need:
+
+- **Custom environments** — Add staging, QA, or any intermediate environment
+- **Role-based access control** — Assign Owner, Admin, Author, and Viewer roles
+- **Outbound webhooks** — Receive real-time POST notifications for workflow events
+- **Higher event limits** — Significantly increased monthly event quota
+- **Priority support** — Faster response times from the Novu support team
+
+## Enterprise Plan
+
+The Enterprise plan is built for organizations with strict compliance, security, and scale requirements:
+
+- **SAML SSO** — Integrate with your existing identity provider
+- **SCIM provisioning** — Automate user lifecycle management
+- **Custom event volume** — Negotiate limits that match your scale
+- **Dedicated SLA** — Contractual uptime and response-time guarantees
+- **Enterprise support** — Dedicated customer success and solutions engineering
+
+[Contact Novu](https://novu.co/contact-us) to discuss Enterprise pricing and custom terms.
+
+## Upgrading Your Plan
+
+<Steps>
+  <Step title="Open Billing Settings">
+    In the [Novu dashboard](https://dashboard.novu.co), go to **Settings** → **Billing**.
+  </Step>
+  <Step title="Select a plan">
+    Review the available plans and click **Upgrade** next to the plan you want.
+  </Step>
+  <Step title="Complete payment">
+    Enter your payment details in the secure checkout. Novu uses Stripe for payment processing.
+  </Step>
+  <Step title="Confirm activation">
+    Your plan upgrades immediately. New features and higher limits are available as soon as the payment is confirmed.
+  </Step>
+</Steps>
+
+## Viewing Invoices
+
+<Steps>
+  <Step title="Open Billing Settings">
+    Go to **Settings** → **Billing** in the Novu dashboard.
+  </Step>
+  <Step title="Access invoice history">
+    Scroll to the **Invoices** section to view and download past invoices for your records.
+  </Step>
+</Steps>
+
+<Note>
+Only members with the **Owner** role can access billing settings and manage the subscription.
+</Note>
+
+## Frequently Asked Questions
+
+**What happens if I exceed my event limit?**
+Novu notifies you when you approach your limit. On the free plan, events above the quota may be queued or dropped depending on your configuration. Upgrade to a paid plan to avoid interruptions.
+
+**Can I switch from a paid plan back to free?**
+Yes. You can downgrade at any time from the Billing settings page. Your paid features remain active until the end of the current billing period.
+
+**Is there a trial for paid plans?**
+Contact [support@novu.co](mailto:support@novu.co) or start a conversation on [novu.co](https://novu.co) to ask about trial options for Team or Enterprise plans.
+
+**How is billing calculated for multiple environments?**
+Events across all environments (Development, Production, and any custom environments) count toward your total monthly quota.

@@ -1,0 +1,417 @@
+---
+title: "Customize the Look and Feel of Novu Inbox"
+sidebarTitle: "Customization"
+description: "Override styles, swap icons, and theme the Novu Inbox to match your design system using the appearance prop and CSS variables."
+---
+
+The Novu Inbox component is designed to be fully themeable and adaptable to your application's visual language. All theming options are exposed through the `appearance` prop, which lets you apply custom styles at different levels of control — from predefined themes to fine-grained component overrides.
+
+The `appearance` prop supports four keys:
+
+| Key | Purpose |
+|---|---|
+| `baseTheme` | Apply a predefined theme (e.g., dark mode) |
+| `variables` | Define global styling properties (colors, fonts, border radius) |
+| `elements` | Style individual UI components by element key |
+| `icons` | Replace default icons with custom ones |
+
+<Tip>
+  Visit the [Inbox Playground](https://inbox.novu.co) to preview common design presets like Notion and Reddit before you start customizing.
+</Tip>
+
+## Apply a Base Theme
+
+Apply a predefined visual style to the entire Inbox UI by passing a `baseTheme` inside the `appearance` prop. Novu provides a built-in dark theme you can import from `@novu/react/themes`.
+
+```jsx
+import { Inbox } from '@novu/react';
+import { dark } from '@novu/react/themes';
+
+function Novu() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      appearance={{ baseTheme: dark }}
+    />
+  );
+}
+
+export default Novu;
+```
+
+## Define Global Variables
+
+Override default styles broadly by passing a `variables` object inside the `appearance` prop. This is the most efficient way to apply sweeping visual changes — like changing the primary color or border radius — with minimal configuration.
+
+```jsx
+import { Inbox } from '@novu/react';
+
+const appearance = {
+  variables: {
+    colorBackground: '#f0f0f0',
+    borderRadius: '8px',
+  },
+};
+
+function Novu() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      appearance={appearance}
+    />
+  );
+}
+
+export default Novu;
+```
+
+<Note>
+  When both `baseTheme` and `variables` are provided, `variables` always take precedence over the base theme values.
+</Note>
+
+### Available Variables
+
+| Variable | Type |
+|---|---|
+| `colorBackground` | `string` |
+| `colorForeground` | `string` |
+| `colorPrimary` | `string` |
+| `colorPrimaryForeground` | `string` |
+| `colorSecondary` | `string` |
+| `colorSecondaryForeground` | `string` |
+| `colorCounter` | `string` |
+| `colorCounterForeground` | `string` |
+| `colorNeutral` | `string` |
+| `colorShadow` | `string` |
+| `fontSize` | `string` |
+| `borderRadius` | `string` |
+
+## Style Individual Elements
+
+Define styles for individual UI components within the Inbox by passing an `elements` object inside the `appearance` prop. Each key corresponds to a specific component, and the value can be a style object, a CSS class string, or Tailwind CSS classes.
+
+<Tabs>
+  <Tab title="Style Object">
+    Pass inline styles directly to any element:
+
+    ```jsx
+    import { Inbox } from '@novu/react';
+
+    const appearance = {
+      elements: {
+        notificationSubject: {
+          color: '#ff0000',
+        },
+      },
+    };
+
+    function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriber="YOUR_SUBSCRIBER_ID"
+          appearance={appearance}
+        />
+      );
+    }
+
+    export default Novu;
+    ```
+  </Tab>
+  <Tab title="Tailwind CSS">
+    Pass Tailwind utility classes as a string:
+
+    ```jsx
+    import { Inbox } from '@novu/react';
+
+    const appearance = {
+      elements: {
+        bellIcon: 'p-4 bg-white rounded-full',
+        notification: 'bg-white rounded-lg shadow-sm hover:shadow-md hover:bg-gray-50',
+      },
+    };
+
+    function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriber="YOUR_SUBSCRIBER_ID"
+          appearance={appearance}
+        />
+      );
+    }
+
+    export default Novu;
+    ```
+  </Tab>
+  <Tab title="CSS Modules">
+    Import classes from a `.module.css` file:
+
+    ```css styles.module.css
+    .bellIcon {
+      padding: 1rem;
+      background-color: white;
+      border-radius: 50%;
+    }
+
+    .bellIcon:hover {
+      background-color: #f9fafb;
+    }
+
+    .notification {
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .notification:hover {
+      background-color: #f9fafb;
+    }
+    ```
+
+    ```jsx
+    import { Inbox } from '@novu/react';
+    import styles from './styles.module.css';
+
+    const appearance = {
+      elements: {
+        bellIcon: styles.bellIcon,
+        notification: styles.notification,
+      },
+    };
+
+    function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+          subscriber="YOUR_SUBSCRIBER_ID"
+          appearance={appearance}
+        />
+      );
+    }
+
+    export default Novu;
+    ```
+  </Tab>
+</Tabs>
+
+### Common Element Keys
+
+| Element | Key in `appearance.elements` |
+|---|---|
+| Bell icon | `bellIcon` |
+| Notification container | `notification` |
+| Notification subject | `notificationSubject` |
+| Notification body | `notificationBody` |
+| Notification icon/image | `notificationImage` |
+| Notification date | `notificationDate` |
+| Notification list | `notificationList` |
+| Primary action button | `notificationPrimaryAction__button` |
+| Secondary action button | `notificationSecondaryAction__button` |
+| Preferences button | `preferences__button` |
+| Archive button | `notificationArchive__button` |
+| Snooze button | `notificationSnooze__button` |
+| Unread/read indicator | `notificationUnread__button` |
+| Popover content | `popoverContent` |
+
+<Tip>
+  Any selector that appears before the 🔔 emoji in DevTools can be targeted via the `elements` property (strip the `nv-` prefix). TypeScript autocomplete also surfaces all available element keys.
+</Tip>
+
+## Dynamic Styles with Callback Functions
+
+Some element keys accept a callback function instead of a static value. The callback receives contextual data at runtime — such as unread counts or notification payload — and returns a class string or style object.
+
+### Style the Bell Icon by Unread Count
+
+```jsx
+import { Inbox } from '@novu/react';
+
+export default function Novu() {
+  const appearance = {
+    elements: {
+      bellIcon: ({ unreadCount }) => {
+        if (unreadCount.total > 10) {
+          return '[--bell-gradient-start:var(--color-yellow-500)] [--bell-gradient-end:var(--color-yellow-500)]';
+        }
+        if (unreadCount.total > 1) {
+          return '[--bell-gradient-start:var(--color-red-500)] [--bell-gradient-end:var(--color-red-500)]';
+        }
+        return '[--bell-gradient-start:var(--color-gray-500)] [--bell-gradient-end:var(--color-gray-500)]';
+      },
+    },
+  };
+
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      appearance={appearance}
+    />
+  );
+}
+```
+
+### Style Notifications by Payload Data
+
+```jsx
+import { Inbox } from '@novu/react';
+
+export default function Novu() {
+  const appearance = {
+    elements: {
+      notification: ({ notification }) => {
+        if (notification.data?.foo) {
+          return 'bg-green-200';
+        }
+        return '';
+      },
+    },
+  };
+
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      appearance={appearance}
+    />
+  );
+}
+```
+
+## Notification Severity Styling
+
+Novu lets you classify workflows by severity level (High, Medium, Low). Each level has default visual styles in the Inbox, and you can override them using the `appearance` prop.
+
+### Override Severity Colors
+
+```jsx
+const appearance = {
+  variables: {
+    colorSeverityHigh: 'red',
+    colorSeverityMedium: 'orange',
+    colorSeverityLow: 'yellow',
+  },
+};
+```
+
+### Override Severity Element Styles
+
+```jsx
+const appearance = {
+  elements: {
+    severityHigh__notificationBar: {
+      backgroundColor: 'red',
+    },
+  },
+};
+```
+
+| Element Key | Description |
+|---|---|
+| `severityHigh__bellContainer` | Bell container for high severity |
+| `severityMedium__bellContainer` | Bell container for medium severity |
+| `severityLow__bellContainer` | Bell container for low severity |
+| `severityHigh__notification` | Individual high severity notifications |
+| `severityMedium__notification` | Individual medium severity notifications |
+| `severityLow__notification` | Individual low severity notifications |
+| `severityHigh__notificationBar` | Left bar for high severity |
+| `severityMedium__notificationBar` | Left bar for medium severity |
+| `severityLow__notificationBar` | Left bar for low severity |
+
+## Custom Bell Icon
+
+Replace the default bell icon with your own React component using the `renderBell` prop:
+
+```jsx
+import { Inbox } from '@novu/react';
+
+function CustomBell() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      renderBell={() => (
+        <div className="bg-blue-300 p-4 inline-flex">
+          New notifications
+        </div>
+      )}
+    />
+  );
+}
+
+export default CustomBell;
+```
+
+## Composable Sub-Components
+
+For full layout control, use the composable sub-components instead of the default `<Inbox />` wrapper. Wrap them in a parent `<Inbox>` that holds your configuration props:
+
+```jsx
+import { Inbox, Bell, Notifications } from '@novu/react';
+import { Popover, PopoverTrigger, PopoverContent } from '@radix-ui/react-popover';
+
+function CustomPopover() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+    >
+      <Popover>
+        <PopoverTrigger>
+          <Bell />
+        </PopoverTrigger>
+        <PopoverContent className="h-[600px] w-[400px] p-0">
+          <Notifications />
+        </PopoverContent>
+      </Popover>
+    </Inbox>
+  );
+}
+
+export default CustomPopover;
+```
+
+## Responsive Inbox with Media Queries
+
+Use the `popoverContent` element key with a CSS class and define media queries in your global stylesheet:
+
+```jsx ResponsiveInbox.tsx
+import { Inbox } from '@novu/react';
+
+const ResponsiveInbox = () => {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      appearance={{
+        elements: {
+          popoverContent: "novu-popover-content",
+        },
+      }}
+    />
+  );
+};
+
+export default ResponsiveInbox;
+```
+
+```css global.css
+.novu-popover-content {
+  max-width: 500px;
+}
+
+@media (max-width: 768px) {
+  .novu-popover-content {
+    max-width: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .novu-popover-content {
+    max-width: 250px;
+  }
+}
+```

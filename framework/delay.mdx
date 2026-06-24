@@ -1,0 +1,127 @@
+---
+title: "Delay Step: Schedule Messages in Framework Workflows"
+sidebarTitle: "Delay"
+description: "Pause a Novu Framework workflow for a fixed duration with step.delay(). Set the amount and unit to delay notifications by seconds, minutes, hours, or days."
+---
+
+The delay step pauses workflow execution for a specified period of time, then resumes to the next step. Use it to space out notifications, give users time to act before a follow-up, or allow a short window for cancellation before sending.
+
+<Info>
+  Novu's durable execution engine persists the workflow state during the delay. Your application does not need to stay running — Novu resumes execution automatically when the delay expires.
+</Info>
+
+## Common Use Cases
+
+- **Follow-up sequences** — Send a welcome email immediately, then check in three days later.
+- **Inbox grace period** — Wait a few minutes before sending a push notification in case the user already saw the in-app notification.
+- **Cancellation window** — Give users 30 seconds to cancel an action before the notification fires.
+
+## Adding a Delay Step
+
+Call `step.delay()` with a step ID and a resolver that returns `unit` and `amount`. You can place a delay step at any position in your workflow — before or after any channel step.
+
+```typescript
+await step.delay(
+  'wait-before-followup',
+  () => {
+    return {
+      type: 'regular',
+      unit: 'days',
+      amount: 1,
+    };
+  }
+);
+```
+
+Valid `unit` values:
+
+| Value | Description |
+|---|---|
+| `'seconds'` | Delay by a number of seconds |
+| `'minutes'` | Delay by a number of minutes |
+| `'hours'` | Delay by a number of hours |
+| `'days'` | Delay by a number of days |
+| `'weeks'` | Delay by a number of weeks |
+| `'months'` | Delay by a number of months |
+
+## Skipping the Delay Conditionally
+
+Use the `skip` option to bypass the delay step when a condition is true. This is useful when some notifications should be immediate while others follow the normal schedule.
+
+```typescript
+await step.delay(
+  'delay',
+  () => {
+    return {
+      type: 'regular',
+      unit: 'days',
+      amount: 1,
+    };
+  },
+  {
+    skip: () => isCriticalMessage(),
+  }
+);
+```
+
+When `skip` returns `true`, Novu skips the delay and immediately runs the next step.
+
+## Example: Welcome Email with a Follow-Up
+
+This workflow sends a welcome email on sign-up, waits three days, then sends an in-app check-in:
+
+```typescript
+import { workflow } from '@novu/framework';
+
+export const onboardingWorkflow = workflow(
+  'onboarding-sequence',
+  async ({ step, payload }) => {
+    // Step 1: Immediate welcome email
+    await step.email('welcome-email', async () => {
+      return {
+        subject: `Welcome to Acme, ${payload.name}!`,
+        body: 'Thanks for signing up. Here is how to get started.',
+      };
+    });
+
+    // Step 2: Wait 3 days
+    await step.delay('post-signup-wait', () => ({
+      type: 'regular',
+      unit: 'days',
+      amount: 3,
+    }));
+
+    // Step 3: Follow-up in-app notification
+    await step.inApp('followup-inbox', async () => {
+      return {
+        subject: 'How is it going?',
+        body: `Hey ${payload.name}, let us know if you have any questions!`,
+      };
+    });
+  },
+  {
+    payloadSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+      },
+      required: ['name'],
+      additionalProperties: false,
+    } as const,
+  }
+);
+```
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="If the delay step fails, will the workflow continue?">
+    No. If the delay step encounters an error, workflow execution stops immediately. Subsequent steps will not run.
+  </Accordion>
+  <Accordion title="Does changing step content affect pending delayed notifications?">
+    No. Changing the step content after a workflow has been triggered with an active delay does not affect the already-pending notification. The content is captured at trigger time.
+  </Accordion>
+  <Accordion title="Can I make delay duration dynamic from the payload?">
+    Yes. The delay resolver is an async function with access to `payload` and `controls`, so you can return different `amount` values based on runtime data.
+  </Accordion>
+</AccordionGroup>

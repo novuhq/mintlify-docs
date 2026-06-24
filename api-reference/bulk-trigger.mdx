@@ -1,0 +1,205 @@
+---
+title: "POST /v1/events/trigger/bulk — Bulk Trigger Workflows"
+sidebarTitle: "Bulk Trigger"
+description: "Trigger up to 100 Novu workflow events in a single API call. Use bulk triggering to reduce API calls during high-volume notification operations."
+---
+
+The bulk trigger endpoint lets you fire up to 100 workflow events in a single HTTP request. Use it during high-volume operations — such as sending a notification to a batch of users after a data import — to reduce the number of API calls you make and stay within your rate limit budget.
+
+Each event in the array is validated independently. If one event exceeds the 512 KB payload size limit, only that event fails; the others are still processed.
+
+```
+POST https://api.novu.co/v1/events/trigger/bulk
+```
+
+<Note>
+  The bulk trigger request costs **100 request tokens** against your Events rate limit bucket, regardless of how many events are in the array. On the Team plan (600 RPS), you can send up to 6 bulk trigger requests per second.
+</Note>
+
+## Request
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | ✅ | `ApiKey YOUR_SECRET_KEY` |
+| `Content-Type` | ✅ | `application/json` |
+| `Idempotency-Key` | — | A unique key for the entire bulk request. See [Idempotency](/api-reference/idempotency). |
+
+### Request body
+
+<ParamField body="events" type="array" required>
+  An array of event objects to trigger. Maximum 100 events per request. Each event object has the same structure as a single trigger request.
+
+  <Expandable title="Event object fields">
+    <ParamField body="name" type="string" required>
+      The trigger identifier of the workflow to send.
+    </ParamField>
+    <ParamField body="to" type="string | object | array" required>
+      The recipient(s) of the notification. Accepts a subscriber ID string, a subscriber object, or an array.
+    </ParamField>
+    <ParamField body="payload" type="object">
+      Key-value data for template rendering and routing rules.
+    </ParamField>
+    <ParamField body="transactionId" type="string">
+      A unique identifier for deduplication of this individual event.
+    </ParamField>
+    <ParamField body="overrides" type="object">
+      Provider-specific configuration overrides.
+    </ParamField>
+    <ParamField body="actor" type="string | object">
+      The subscriber ID or object representing who triggered the event.
+    </ParamField>
+    <ParamField body="tenant" type="string | object">
+      A tenant identifier to scope this event.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+Returns `201 Created` with an array of results — one per event in the request, in the same order.
+
+<ResponseField name="response" type="array" required>
+  An array of trigger result objects, one per submitted event.
+
+  <Expandable title="Result object fields">
+    <ResponseField name="acknowledged" type="boolean" required>
+      Whether the individual trigger was acknowledged.
+    </ResponseField>
+    <ResponseField name="status" type="string" required>
+      Processing status for this event. Same values as the single trigger endpoint: `processed`, `trigger_not_active`, `no_workflow_active_steps_defined`, `no_workflow_steps_defined`, `no_tenant_found`, `invalid_recipients`, or `error`.
+    </ResponseField>
+    <ResponseField name="transactionId" type="string">
+      The transaction ID for this individual event.
+    </ResponseField>
+    <ResponseField name="activityFeedLink" type="string">
+      A direct link to the activity feed entry for this event in the Novu dashboard.
+    </ResponseField>
+    <ResponseField name="error" type="array">
+      Error messages for this event, if `status` is `error`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.novu.co/v1/events/trigger/bulk" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "events": [
+      {
+        "name": "order-confirmation",
+        "to": { "subscriberId": "user-123" },
+        "payload": { "orderId": "order-789" },
+        "transactionId": "txn-order-789"
+      },
+      {
+        "name": "order-confirmation",
+        "to": { "subscriberId": "user-456" },
+        "payload": { "orderId": "order-790" },
+        "transactionId": "txn-order-790"
+      }
+    ]
+  }'
+```
+
+```javascript JavaScript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+const response = await novu.events.triggerBulk({
+  events: [
+    {
+      workflowId: 'order-confirmation',
+      to: { subscriberId: 'user-123' },
+      payload: { orderId: 'order-789' },
+      transactionId: 'txn-order-789',
+    },
+    {
+      workflowId: 'order-confirmation',
+      to: { subscriberId: 'user-456' },
+      payload: { orderId: 'order-790' },
+      transactionId: 'txn-order-790',
+    },
+  ],
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v1/events/trigger/bulk"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "events": [
+        {
+            "name": "order-confirmation",
+            "to": {"subscriberId": "user-123"},
+            "payload": {"orderId": "order-789"},
+            "transactionId": "txn-order-789",
+        },
+        {
+            "name": "order-confirmation",
+            "to": {"subscriberId": "user-456"},
+            "payload": {"orderId": "order-790"},
+            "transactionId": "txn-order-790",
+        },
+    ]
+}
+
+response = requests.post(url, headers=headers, json=payload)
+print(response.json())
+```
+</CodeGroup>
+
+### Example response
+
+```json
+[
+  {
+    "acknowledged": true,
+    "status": "processed",
+    "transactionId": "txn-order-789",
+    "activityFeedLink": "https://dashboard.novu.co/activity/..."
+  },
+  {
+    "acknowledged": true,
+    "status": "processed",
+    "transactionId": "txn-order-790",
+    "activityFeedLink": "https://dashboard.novu.co/activity/..."
+  }
+]
+```
+
+## Payload size limits
+
+Each event in the bulk array is validated individually against the 512 KB payload size limit. If a single event exceeds the limit, the response includes a `413` error for that event with the index and workflow identifier:
+
+```json
+{
+  "statusCode": 413,
+  "message": "Event at index 1 (workflow: \"order-confirmation\") has payload size (524342 bytes) exceeds maximum allowed size of 524288 bytes (512KB). Note: Attachments are excluded from this limit."
+}
+```
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Trigger Event" icon="bolt" href="/api-reference/trigger-event">
+    Single-event trigger with full parameter reference.
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api-reference/rate-limiting">
+    Understand token costs for bulk vs. standard requests.
+  </Card>
+  <Card title="Idempotency" icon="rotate" href="/api-reference/idempotency">
+    Prevent duplicate bulk triggers when retrying requests.
+  </Card>
+</CardGroup>

@@ -1,0 +1,102 @@
+---
+title: "What Is Agent Communication Infrastructure (ACI)?"
+sidebarTitle: "What is ACI"
+description: "ACI is Novu's infrastructure layer for agent-to-human conversations. It handles webhooks, message normalization, and channel delivery so you focus on agent logic."
+---
+
+Agent Communication Infrastructure (ACI) is the communication layer that connects your AI agents to the messaging platforms where people already work, collaborate, and talk to businesses. ACI sits between communication channels and your agent logic, providing a single interface for inbound messages, outbound replies, conversation state, user identity, and multi-channel delivery — without requiring you to build platform-specific integrations from scratch.
+
+## What problem does ACI solve?
+
+Software is becoming more conversational. People no longer only click through interfaces or receive one-way notifications — they ask questions, reply to messages, clarify requests, approve actions, and expect software to continue the conversation in the channels where they already are.
+
+At the same time, agents are becoming more capable. Teams are building agents that answer questions, analyze information, trigger workflows, escalate issues, and coordinate with other systems. The problem: most agents are still trapped inside one interface.
+
+Moving the same agent into Slack, Microsoft Teams, WhatsApp, email, or Telegram usually means rebuilding the communication layer for each platform. Each channel has its own webhook format, identity model, threading behavior, permissions, message formatting, and delivery constraints.
+
+ACI standardizes that layer. You create the agent once. ACI handles communication across all connected channels.
+
+## How ACI works
+
+ACI introduces a three-part architecture that separates platform delivery from agent intelligence.
+
+### Communication channels
+
+Communication channels are the surfaces where users interact with your agent:
+
+- Slack
+- Microsoft Teams
+- WhatsApp
+- Telegram
+- Email
+
+When a user sends a message on any connected channel, it enters the ACI layer.
+
+### Bridge
+
+The bridge is the infrastructure layer between the communication channel and your agent brain. It:
+
+1. Receives the platform webhook and normalizes it into a standard format.
+2. Resolves the user's identity, mapping platform users to Novu subscribers when possible.
+3. Creates or loads the conversation for that thread, attaching relevant history.
+4. Forwards the full context — message, history, subscriber, platform details — to your configured agent brain.
+5. Delivers the agent's reply back to the correct platform thread.
+6. Persists the response in conversation history and records activity for observability.
+
+### Agent
+
+The agent brain is the system that decides how to respond. ACI supports two kinds:
+
+- **Custom code agent** — Your server receives the context object and processes it however you decide. Call an LLM, run business logic, use external APIs, route to a human, or combine multiple systems. Build with the Novu agent SDK, AI SDK, LangChain, OpenAI SDK, or any custom code.
+- **Managed agent** — You configure the agent's behavior, system prompt, tools, skills, and external connections. The managed platform (currently Claude) runs the agent loop while ACI handles the communication layer.
+
+Because the agent brain is separate from the channel layer, your agent does not need channel-specific logic for each connected provider.
+
+## What ACI handles vs. what you control
+
+<CardGroup cols={2}>
+  <Card title="ACI handles" icon="shield-check">
+    - Webhook ingestion and message normalization across all connected platforms
+    - Message delivery to the correct platform thread
+    - Conversation persistence and state management
+    - Subscriber identity resolution
+    - Typing indicators and platform-specific formatting
+    - Conversation context and history passed to your agent on every message
+  </Card>
+  <Card title="You control" icon="sliders">
+    - Your LLM, prompts, and model configuration
+    - Your tools, function calls, and business logic
+    - Your API keys and credentials
+    - Your choice of runtime (AI SDK, LangChain, OpenAI SDK, custom code)
+    - For managed agents: system prompt, MCP servers, skills, and guardrails
+  </Card>
+</CardGroup>
+
+## Common use cases
+
+ACI is built for teams that have an agent or are building one and need to connect it to the messaging platforms where their users already are.
+
+- **Support agents** that answer questions from Slack, Teams, WhatsApp, or email.
+- **Internal operations agents** that triage requests and route work.
+- **Conversational agents** that collect information from users across multiple turns.
+- **File-processing agents** that receive attachments and respond with analysis.
+- **Human-in-the-loop agents** that escalate complex conversations to a person.
+- **Workflow agents** that trigger notifications, approvals, or summaries from within a conversation.
+- **Multi-channel agents** that need one communication interface across several providers.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/agents/quickstart">
+    Create your first agent, connect Slack, and send a message in under 5 minutes.
+  </Card>
+  <Card title="Managed Agent" icon="sparkles" href="/agents/managed-agent">
+    Configure a fully managed agent powered by Claude.
+  </Card>
+  <Card title="Custom Code Agent" icon="code" href="/agents/custom-code-agent">
+    Build an agent with full control over logic, tools, and event handling.
+  </Card>
+  <Card title="Conversations" icon="comments" href="/agents/conversations">
+    Monitor and inspect live agent conversations in the dashboard.
+  </Card>
+</CardGroup>

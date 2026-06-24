@@ -1,0 +1,252 @@
+---
+title: "@novu/react-native SDK for Mobile Notifications"
+sidebarTitle: "React Native"
+description: "Integrate Novu's in-app notification system into your React Native app. Use NovuProvider and hooks to display and manage notifications on iOS and Android."
+---
+
+The `@novu/react-native` package brings Novu's in-app notification system to iOS and Android. It provides a `NovuProvider` context component and a set of hooks — including `useNotifications` — that handle data fetching, real-time updates, pagination, and pull-to-refresh for you. You own the UI; Novu handles the data layer.
+
+<Info>
+  Looking for a working example? Check out the [Novu Expo Template](https://github.com/novuhq/novu-expo) for a complete, runnable demo of the inbox in a React Native Expo project.
+</Info>
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install @novu/react-native
+```
+```bash yarn
+yarn add @novu/react-native
+```
+```bash pnpm
+pnpm add @novu/react-native
+```
+```bash bun
+bun add @novu/react-native
+```
+</CodeGroup>
+
+---
+
+## NovuProvider
+
+Wrap your app (or the screen subtree that needs notifications) with `NovuProvider`. It initializes the Novu client and shares the context with all child hooks.
+
+```tsx
+import { NovuProvider } from "@novu/react-native";
+
+function Layout() {
+  return (
+    <NovuProvider
+      subscriber="YOUR_SUBSCRIBER_ID"
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+    >
+      {/* Your app screens and components */}
+    </NovuProvider>
+  );
+}
+```
+
+<Tip>
+  Place `NovuProvider` near the root of your navigation tree so that hooks like `useNotifications` are available on every screen without extra wrappers.
+</Tip>
+
+### NovuProvider Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `subscriber` | `string` | Yes | The unique identifier of the current user (subscriber) |
+| `applicationIdentifier` | `string` | Yes | Your Novu application identifier from the Dashboard |
+| `subscriberHash` | `string` | No | HMAC hash for subscriber authentication (recommended in production) |
+| `apiUrl` | `string` | No | Custom API URL for EU region or self-hosted Novu instances |
+| `socketUrl` | `string` | No | Custom WebSocket URL for EU region or self-hosted instances |
+| `children` | `ReactNode` | Yes | Child components that gain access to the Novu context |
+
+<Note>
+  Find your `applicationIdentifier` in the [Novu Dashboard API keys page](https://dashboard.novu.co/api-keys). For EU region, set `apiUrl="https://eu.api.novu.co"` and `socketUrl="https://eu.socket.novu.co"`.
+</Note>
+
+---
+
+## useNotifications
+
+The `useNotifications` hook fetches the subscriber's notification feed and keeps it in sync with real-time updates. It exposes the full notifications array, pagination helpers, and loading state.
+
+### Return Values
+
+| Value | Type | Description |
+|-------|------|-------------|
+| `notifications` | `Notification[]` | Array of notification objects for the current subscriber |
+| `isLoading` | `boolean` | `true` while the initial page is loading |
+| `hasMore` | `boolean` | `true` when more pages are available to fetch |
+| `fetchMore` | `() => void` | Load the next page (call on scroll-to-end) |
+| `refetch` | `() => Promise<void>` | Re-fetch the notification list from scratch (use for pull-to-refresh) |
+
+### Usage
+
+```tsx
+import {
+  FlatList,
+  View,
+  Text,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import { useNotifications } from "@novu/react-native";
+
+function NotificationCenter() {
+  const { notifications, isLoading, fetchMore, hasMore, refetch } =
+    useNotifications();
+
+  const renderItem = ({ item }) => (
+    <View style={{ padding: 12, borderBottomWidth: 1, borderColor: "#e5e7eb" }}>
+      <Text style={{ fontWeight: item.isRead ? "400" : "600" }}>
+        {item.body}
+      </Text>
+      <Text style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+        {new Date(item.createdAt).toLocaleDateString()}
+      </Text>
+    </View>
+  );
+
+  const renderFooter = () => {
+    if (!hasMore) return null;
+    return (
+      <View style={{ padding: 16 }}>
+        <ActivityIndicator size="small" color="#2196F3" />
+      </View>
+    );
+  };
+
+  const renderEmpty = () => (
+    <View style={{ flex: 1, alignItems: "center", paddingTop: 64 }}>
+      <Text style={{ color: "#6b7280" }}>No notifications yet</Text>
+    </View>
+  );
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color="#2196F3" />
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      data={notifications}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id}
+      onEndReached={fetchMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={renderFooter}
+      ListEmptyComponent={renderEmpty}
+      refreshControl={
+        <RefreshControl
+          refreshing={isLoading}
+          onRefresh={refetch}
+          colors={["#2196F3"]}
+        />
+      }
+    />
+  );
+}
+```
+
+---
+
+## Notification Object
+
+Each item in the `notifications` array is a `Notification` object with the following shape:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique notification ID |
+| `body` | `string` | Notification message body |
+| `subject` | `string` | Notification subject/title |
+| `isRead` | `boolean` | Whether the notification has been read |
+| `isSeen` | `boolean` | Whether the notification has been seen |
+| `isArchived` | `boolean` | Whether the notification is archived |
+| `isSnoozed` | `boolean` | Whether the notification is snoozed |
+| `createdAt` | `string` | ISO 8601 creation timestamp |
+| `readAt` | `string \| null` | ISO 8601 timestamp when marked read |
+| `avatar` | `string` | Avatar URL for the notification |
+| `primaryAction` | `Action` | Primary CTA button data |
+| `secondaryAction` | `Action` | Secondary CTA button data |
+| `tags` | `string[]` | Tags attached to the notification |
+| `data` | `NotificationData` | Custom payload data |
+
+---
+
+## Full Example with Mark-as-Read
+
+This example shows how to render a notification list where tapping a row marks it as read.
+
+```tsx
+import React from "react";
+import { FlatList, TouchableOpacity, View, Text, StyleSheet } from "react-native";
+import { NovuProvider, useNotifications, Notification } from "@novu/react-native";
+
+function NotificationItem({ notification }: { notification: Notification }) {
+  const handlePress = async () => {
+    if (!notification.isRead) {
+      await notification.read();
+    }
+  };
+
+  return (
+    <TouchableOpacity onPress={handlePress} style={styles.item}>
+      <View style={styles.dot}>
+        {!notification.isRead && <View style={styles.unreadDot} />}
+      </View>
+      <View style={styles.content}>
+        {notification.subject && (
+          <Text style={styles.subject}>{notification.subject}</Text>
+        )}
+        <Text style={styles.body}>{notification.body}</Text>
+        <Text style={styles.date}>
+          {new Date(notification.createdAt).toLocaleString()}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function InboxScreen() {
+  const { notifications, isLoading, fetchMore, refetch } = useNotifications();
+
+  return (
+    <FlatList
+      data={notifications}
+      renderItem={({ item }) => <NotificationItem notification={item} />}
+      keyExtractor={(item) => item.id}
+      onEndReached={fetchMore}
+      onEndReachedThreshold={0.5}
+      refreshing={isLoading}
+      onRefresh={refetch}
+    />
+  );
+}
+
+export default function App() {
+  return (
+    <NovuProvider
+      subscriber="YOUR_SUBSCRIBER_ID"
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+    >
+      <InboxScreen />
+    </NovuProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  item: { flexDirection: "row", padding: 16, borderBottomWidth: 1, borderColor: "#e5e7eb" },
+  dot: { width: 24, alignItems: "center", paddingTop: 4 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#3b82f6" },
+  content: { flex: 1 },
+  subject: { fontWeight: "600", marginBottom: 2 },
+  body: { color: "#374151" },
+  date: { fontSize: 12, color: "#9ca3af", marginTop: 4 },
+});
+```

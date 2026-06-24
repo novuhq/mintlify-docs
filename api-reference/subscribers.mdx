@@ -1,0 +1,343 @@
+---
+title: "Subscriber API: Create and Manage Recipients"
+sidebarTitle: "Subscribers"
+description: "REST API endpoints for managing Novu subscribers. Create, update, bulk-import, and delete subscriber records. Set channel credentials and preferences."
+---
+
+Subscribers are the recipients of your Novu notifications. Each subscriber maps to a user or entity in your system and stores profile information, channel credentials, and notification preferences. You can create subscribers in advance, or create them inline when triggering a workflow by passing a subscriber object in the `to` field.
+
+<Note>
+  The Novu subscriber API uses **v2** endpoints (`/v2/subscribers`) for create and update operations, and **v1** for bulk operations (`/v1/subscribers/bulk`).
+</Note>
+
+## Create or update a subscriber
+
+Create a new subscriber or update an existing one. If a subscriber with the given `subscriberId` already exists, Novu updates it with the provided fields.
+
+```
+POST https://api.novu.co/v2/subscribers
+```
+
+### Request body
+
+<ParamField body="subscriberId" type="string" required>
+  Your unique identifier for this subscriber. Typically maps to the user ID in your system.
+</ParamField>
+
+<ParamField body="firstName" type="string">
+  First name of the subscriber.
+</ParamField>
+
+<ParamField body="lastName" type="string">
+  Last name of the subscriber.
+</ParamField>
+
+<ParamField body="email" type="string">
+  Email address of the subscriber. Required for email channel delivery.
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Phone number of the subscriber. Required for SMS channel delivery.
+</ParamField>
+
+<ParamField body="avatar" type="string">
+  URL of the subscriber's avatar image.
+</ParamField>
+
+<ParamField body="locale" type="string">
+  Locale of the subscriber, for example `en-US`.
+</ParamField>
+
+<ParamField body="timezone" type="string">
+  Timezone of the subscriber, for example `America/New_York`.
+</ParamField>
+
+<ParamField body="data" type="object">
+  Custom key-value data to store on the subscriber. Available in workflow templates and routing rules.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="failIfExists" type="boolean">
+  If `true`, the request returns an error instead of updating when a subscriber with the same `subscriberId` already exists.
+</ParamField>
+
+### Response
+
+Returns `201 Created` with the full subscriber object.
+
+<ResponseField name="subscriberId" type="string" required>
+  The subscriber ID you provided.
+</ResponseField>
+
+<ResponseField name="_id" type="string">
+  The internal Novu-generated ID. This differs from `subscriberId` — use `subscriberId` for all API queries.
+</ResponseField>
+
+<ResponseField name="firstName" type="string | null">The subscriber's first name.</ResponseField>
+<ResponseField name="lastName" type="string | null">The subscriber's last name.</ResponseField>
+<ResponseField name="email" type="string | null">The subscriber's email address.</ResponseField>
+<ResponseField name="phone" type="string | null">The subscriber's phone number.</ResponseField>
+<ResponseField name="avatar" type="string | null">URL of the subscriber's avatar image.</ResponseField>
+<ResponseField name="locale" type="string | null">The subscriber's locale setting.</ResponseField>
+<ResponseField name="timezone" type="string | null">The subscriber's timezone.</ResponseField>
+<ResponseField name="channels" type="array">Channel credentials for push and chat integrations.</ResponseField>
+<ResponseField name="isOnline" type="boolean | null">Whether the subscriber is currently online.</ResponseField>
+<ResponseField name="lastOnlineAt" type="string | null">ISO 8601 timestamp of when the subscriber was last online.</ResponseField>
+<ResponseField name="createdAt" type="string" required>ISO 8601 timestamp of when the subscriber was created.</ResponseField>
+<ResponseField name="updatedAt" type="string" required>ISO 8601 timestamp of the last update.</ResponseField>
+<ResponseField name="deleted" type="boolean" required>Whether the subscriber has been deleted.</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.novu.co/v2/subscribers" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "subscriberId": "user-123",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com",
+    "phone": "+14155551234",
+    "locale": "en-US",
+    "timezone": "America/New_York",
+    "data": {
+      "plan": "pro",
+      "company": "Acme Corp"
+    }
+  }'
+```
+
+```javascript JavaScript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+await novu.subscribers.create({
+  subscriberId: 'user-123',
+  firstName: 'Jane',
+  lastName: 'Smith',
+  email: 'jane@example.com',
+  phone: '+14155551234',
+  locale: 'en-US',
+  timezone: 'America/New_York',
+  data: { plan: 'pro', company: 'Acme Corp' },
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v2/subscribers"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "subscriberId": "user-123",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane@example.com",
+    "locale": "en-US",
+    "timezone": "America/New_York",
+    "data": {"plan": "pro"},
+}
+
+response = requests.post(url, headers=headers, json=payload)
+```
+</CodeGroup>
+
+---
+
+## Update a subscriber
+
+Update specific fields on an existing subscriber. Only the fields you provide are changed.
+
+```
+PATCH https://api.novu.co/v2/subscribers/{subscriberId}
+```
+
+### Path parameters
+
+<ParamField path="subscriberId" type="string" required>
+  The unique identifier of the subscriber to update.
+</ParamField>
+
+### Request body
+
+Same optional fields as create: `firstName`, `lastName`, `email`, `phone`, `avatar`, `locale`, `timezone`, `data`.
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH "https://api.novu.co/v2/subscribers/user-123" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "email": "jane.new@example.com",
+    "data": { "plan": "enterprise" }
+  }'
+```
+
+```javascript JavaScript
+await novu.subscribers.update('user-123', {
+  email: 'jane.new@example.com',
+  data: { plan: 'enterprise' },
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v2/subscribers/user-123"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "email": "jane.new@example.com",
+    "data": {"plan": "enterprise"},
+}
+
+response = requests.patch(url, headers=headers, json=payload)
+```
+</CodeGroup>
+
+---
+
+## Bulk create subscribers
+
+Create or update up to 500 subscribers in a single request.
+
+```
+POST https://api.novu.co/v1/subscribers/bulk
+```
+
+<Note>
+  Bulk subscriber requests cost **100 request tokens** against your Configuration rate limit bucket.
+</Note>
+
+### Request body
+
+<ParamField body="subscribers" type="array" required>
+  An array of subscriber objects. Maximum 500 subscribers per request. Each object follows the same schema as the single create endpoint, with `subscriberId` required.
+</ParamField>
+
+### Response
+
+<ResponseField name="created" type="array" required>
+  Subscriber IDs that were newly created.
+</ResponseField>
+
+<ResponseField name="updated" type="array" required>
+  Subscriber IDs that were updated (already existed).
+</ResponseField>
+
+<ResponseField name="failed" type="array" required>
+  Failed operations with `subscriberId` and `message` describing the error.
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.novu.co/v1/subscribers/bulk" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "subscribers": [
+      {
+        "subscriberId": "user-123",
+        "firstName": "Jane",
+        "email": "jane@example.com"
+      },
+      {
+        "subscriberId": "user-456",
+        "firstName": "John",
+        "email": "john@example.com"
+      }
+    ]
+  }'
+```
+
+```javascript JavaScript
+await novu.subscribers.bulkCreate({
+  subscribers: [
+    { subscriberId: 'user-123', firstName: 'Jane', email: 'jane@example.com' },
+    { subscriberId: 'user-456', firstName: 'John', email: 'john@example.com' },
+  ],
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v1/subscribers/bulk"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "subscribers": [
+        {"subscriberId": "user-123", "firstName": "Jane", "email": "jane@example.com"},
+        {"subscriberId": "user-456", "firstName": "John", "email": "john@example.com"},
+    ]
+}
+
+response = requests.post(url, headers=headers, json=payload)
+```
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "created": [
+    { "subscriberId": "user-456" }
+  ],
+  "updated": [
+    { "subscriberId": "user-123" }
+  ],
+  "failed": []
+}
+```
+
+---
+
+## Update subscriber preferences
+
+Update a subscriber's channel preferences for a specific workflow or globally.
+
+```
+PATCH https://api.novu.co/v2/subscribers/{subscriberId}/preferences
+```
+
+### Request body
+
+<ParamField body="channels" type="object">
+  Channel-specific preferences. Set each channel to `true` (enabled) or `false` (disabled).
+
+  ```json
+  "channels": {
+    "email": true,
+    "sms": false,
+    "in_app": true,
+    "push": true,
+    "chat": false
+  }
+  ```
+</ParamField>
+
+<ParamField body="workflowId" type="string">
+  If provided, updates preferences for that specific workflow. If omitted, updates global preferences.
+</ParamField>
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Topics" icon="tag" href="/api-reference/topics">
+    Group subscribers into topics and trigger bulk notifications.
+  </Card>
+  <Card title="Trigger Event" icon="bolt" href="/api-reference/trigger-event">
+    Send a notification to a subscriber.
+  </Card>
+</CardGroup>

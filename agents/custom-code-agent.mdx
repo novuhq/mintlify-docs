@@ -1,0 +1,133 @@
+---
+title: "Custom Code Agent: Full Control Over Agent Logic"
+sidebarTitle: "Custom Code"
+description: "Build an AI agent with your own LLM, tools, and logic. Handle Novu events, call any API or model, and reply using the Novu agent SDK."
+---
+
+A custom code agent gives you complete control over how your agent thinks and responds. You write handler code that runs on your own server; Novu handles webhook ingestion, identity resolution, conversation state, and delivery across all connected channels. Your handler receives a rich context object and calls `ctx.reply()` — Novu does the rest.
+
+Custom code agents are compatible with any LLM or agent framework: the Novu agent SDK, Vercel AI SDK, LangChain, OpenAI SDK, or any custom code of your choosing.
+
+## Core concepts
+
+### Inbound flow
+
+When a user sends a message on a connected platform, Novu:
+
+1. Normalizes the platform webhook and maps the platform user to a Novu subscriber when possible.
+2. Creates or loads the conversation for that thread, assembling message history and metadata.
+3. Calls your handler with the full context object.
+4. Delivers your reply to the provider thread and persists it in conversation history.
+
+Your server never calls Slack, Teams, or email APIs directly. It gets a context object and returns a reply.
+
+### Event handlers
+
+Your agent responds to four types of events:
+
+| Handler | When it runs | Typical use |
+|---------|--------------|-------------|
+| `onMessage` | User sends a message | Process text and reply via LLM or business logic |
+| `onAction` | User clicks a button or selects from a card | Handle form inputs, button clicks, dropdowns |
+| `onReaction` | User adds or removes a reaction | Collect feedback, trigger follow-ups |
+| `onResolve` | Conversation marked resolved | Run cleanup, analytics, or summary logic |
+
+### Context object
+
+Each handler receives a context object containing:
+
+- The incoming message text and metadata
+- Conversation state, status, and metadata
+- Resolved subscriber data (when available)
+- Recent message history
+- Provider and platform details (thread, channel IDs)
+- Methods: `ctx.reply()`, `ctx.metadata.set()`, `ctx.trigger()`, `ctx.resolve()`
+
+### Replies vs. signals
+
+**Replies** are user-visible messages you send with `ctx.reply()`: plain text, markdown, or interactive cards (buttons, dropdowns, links, inputs). Card interactions fire `onAction` with the `actionId` and value.
+
+**Signals** update system state without necessarily sending a chat message:
+
+| Signal | What it does |
+|--------|--------------|
+| Metadata | Set key-value data on the conversation, persists across turns |
+| Trigger | Start a Novu notification workflow from the thread |
+| Resolve | Mark the conversation resolved with an optional summary |
+
+One handler turn can reply, set metadata, trigger a workflow, and resolve — all in a single call.
+
+## Quickstart
+
+<Steps>
+  <Step title="Create the agent in the dashboard">
+    1. Go to the [Novu dashboard](https://dashboard.novu.co) and click **Agents** in the sidebar.
+    2. Click **Create agent**.
+    3. Fill in the **Agent name**, **Identifier**, and optional **Description**.
+    4. Click **Set up agent**.
+  </Step>
+  <Step title="Connect a provider">
+    On the setup page, select **Slack** as your provider. The dashboard guides you through creating a Slack app using a configuration token.
+
+    ```
+    Configuration token: xoxe.xoxp-...
+    ```
+
+    <Info>
+      The token is used once to create your Slack app and is not stored by Novu.
+    </Info>
+  </Step>
+  <Step title="Scaffold your project">
+    Copy the scaffold command from the dashboard and run it in your project directory:
+
+    ```bash
+    npx novu@latest init -t agent \
+      --secret-key=<NOVU_SECRET_KEY> \
+      --api-url=<NOVU_API_URL>
+    ```
+  </Step>
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev:novu
+    ```
+
+    This starts your app, opens a dev tunnel, and registers the bridge URL with Novu.
+  </Step>
+  <Step title="Send a message and test your handler">
+    Message your bot in Slack. Your `onMessage` handler runs and the reply appears in the thread. Edit files in `app/novu/agents/` to add your LLM calls or business logic.
+  </Step>
+</Steps>
+
+## Conversation and workflow integration
+
+ACI extends Novu's workflow system — it does not replace it. Conversations and Novu notification workflows share the same account:
+
+- **Conversation to workflow** — A user asks in Slack for a report by email. Your handler calls `ctx.trigger()` and an existing Novu workflow sends the email.
+- **Workflow to conversation** — A user replies to a digest email. That reply opens a new agent conversation.
+
+## Supported providers
+
+Your handler code stays provider-agnostic. Adding a provider does not require changing your agent logic.
+
+- Slack
+- Microsoft Teams
+- WhatsApp
+- Email
+- Telegram
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/agents/quickstart">
+    Full step-by-step guide: create an agent, connect Slack, and get a reply in-thread.
+  </Card>
+  <Card title="What is ACI?" icon="circle-question" href="/agents/what-is-aci">
+    Understand the infrastructure layer, the bridge, and the separation of concerns.
+  </Card>
+  <Card title="Conversations" icon="comments" href="/agents/conversations">
+    View conversation history, signals, metadata, and participant details in the dashboard.
+  </Card>
+  <Card title="Managed Agent" icon="sparkles" href="/agents/managed-agent">
+    Skip the handler code and use a Claude-powered managed agent instead.
+  </Card>
+</CardGroup>

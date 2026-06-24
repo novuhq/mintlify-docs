@@ -1,0 +1,209 @@
+---
+title: "Python Server SDK: novu-py"
+sidebarTitle: "Python"
+description: "Use the Novu Python SDK to trigger notifications and manage subscribers from your Python backend. Install novu-py and initialize with your secret key."
+---
+
+The `novu-py` package is Novu's official Python server SDK. It wraps the [Novu REST API](https://api.novu.co/v1) with a clean Python interface, supports both synchronous and asynchronous usage, and works with any Python web framework — Django, FastAPI, Flask, and beyond.
+
+<Info>
+  The source code for this SDK is available on [GitHub](https://github.com/novuhq/novu-py).
+</Info>
+
+## Installation
+
+Install `novu-py` from PyPI using pip, Poetry, or uv:
+
+<CodeGroup>
+```bash pip
+pip install novu-py
+```
+```bash poetry
+poetry add novu-py
+```
+```bash uv
+uv add novu-py
+```
+</CodeGroup>
+
+---
+
+## Initialization
+
+Import `Novu` from `novu_py` and instantiate it with your secret key. Use a context manager (`with` statement) to ensure resources are properly cleaned up.
+
+```python
+import os
+from novu_py import Novu
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    # make API calls here
+    pass
+```
+
+<Warning>
+  Store your secret key in an environment variable. Never commit it to source control.
+</Warning>
+
+For the EU region, pass the `server_url` parameter:
+
+```python
+from novu_py import Novu
+import os
+
+with Novu(
+    secret_key=os.getenv("NOVU_SECRET_KEY", ""),
+    server_url="https://eu.api.novu.co",
+) as novu:
+    pass
+```
+
+---
+
+## Trigger a Workflow
+
+Call `novu.trigger()` to fire a notification workflow for a subscriber. Pass your `workflow_id`, the `to` subscriber details, and any `payload` variables used in your workflow templates.
+
+```python
+import novu_py
+from novu_py import Novu
+import os
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    res = novu.trigger(
+        trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+            workflow_id="welcome-email",
+            to={
+                "subscriber_id": "user_123",
+                "first_name": "Alice",
+                "last_name": "Smith",
+                "email": "alice@example.com",
+            },
+            payload={
+                "user_name": "Alice",
+                "action_url": "https://app.example.com/get-started",
+            },
+        )
+    )
+
+    print(res)
+```
+
+### Trigger with Overrides
+
+Use `overrides` to customize channel-specific behavior at send time, such as adding a BCC address to an email.
+
+```python
+import novu_py
+from novu_py import Novu
+import os
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    res = novu.trigger(
+        trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+            workflow_id="order-confirmation",
+            to={
+                "subscriber_id": "user_123",
+                "email": "alice@example.com",
+            },
+            payload={
+                "order_id": "ORD-9876",
+                "total": "$49.99",
+            },
+            overrides={
+                "email": {
+                    "bcc": "orders-archive@company.com"
+                }
+            },
+        )
+    )
+
+    print(res)
+```
+
+---
+
+## Async Usage
+
+For async frameworks such as FastAPI, use `novu.trigger()` within an `async with` block.
+
+```python
+import novu_py
+from novu_py import Novu
+import asyncio
+import os
+
+async def send_notification():
+    async with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+        res = await novu.trigger_async(
+            trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+                workflow_id="welcome-email",
+                to={
+                    "subscriber_id": "user_123",
+                    "first_name": "Alice",
+                    "email": "alice@example.com",
+                },
+                payload={
+                    "user_name": "Alice",
+                },
+            )
+        )
+        print(res)
+
+asyncio.run(send_notification())
+```
+
+---
+
+## Create a Subscriber
+
+Register a subscriber in Novu before (or at the time of) sending them their first notification.
+
+```python
+import novu_py
+from novu_py import Novu
+import os
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    res = novu.subscribers.create(
+        create_subscriber_request_dto=novu_py.CreateSubscriberRequestDto(
+            subscriber_id="user_123",
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            phone="+1234567890",
+            avatar="https://example.com/avatars/alice.png",
+            data={
+                "plan": "pro",
+                "signed_up_at": "2024-01-15",
+            },
+        )
+    )
+
+    print(res)
+```
+
+---
+
+## Error Handling
+
+Wrap SDK calls in a `try/except` block to handle API errors gracefully in production code.
+
+```python
+import novu_py
+from novu_py import Novu
+import os
+
+with Novu(secret_key=os.getenv("NOVU_SECRET_KEY", "")) as novu:
+    try:
+        res = novu.trigger(
+            trigger_event_request_dto=novu_py.TriggerEventRequestDto(
+                workflow_id="user-alert",
+                to={"subscriber_id": "user_123"},
+                payload={"message": "Something needs your attention."},
+            )
+        )
+        print("Triggered:", res)
+    except Exception as e:
+        print("Failed to trigger notification:", e)
+```

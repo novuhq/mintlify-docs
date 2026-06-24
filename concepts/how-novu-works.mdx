@@ -1,0 +1,158 @@
+---
+title: "How Novu Works: Architecture Overview"
+sidebarTitle: "How It Works"
+description: "Learn how Novu's workflows, subscribers, environments, and integrations connect to deliver multi-channel notifications reliably at scale."
+---
+
+Novu is notification infrastructure built around a small set of composable concepts: workflows, subscribers, environments, and integrations. Each concept serves a distinct role in the delivery pipeline, and together they give you a consistent, observable system for sending in-app, email, SMS, push, and chat notifications at scale.
+
+## Core concepts
+
+At a high level, every notification in Novu flows through the same pipeline:
+
+1. Your application **triggers** a workflow via the API.
+2. Novu **resolves** the target subscriber (or topic).
+3. Novu **executes** each step in the workflow sequentially.
+4. Messages are **delivered** through the configured integrations for each channel.
+5. Execution logs are **recorded** in the Activity Feed for observability.
+
+The sections below explain each piece of that pipeline.
+
+### Organizations and environments
+
+Everything starts with your **organization** — the top-level entity in Novu. Each organization contains multiple **environments**. By default you get two:
+
+- **Development** — for building and testing workflows without affecting live users.
+- **Production** — for delivering notifications to real subscribers.
+
+Enterprise and Team plans can create additional custom environments (e.g., staging or QA).
+
+Each environment is fully isolated. It has its own:
+
+- API keys (application identifier + secret key)
+- Workflows
+- Subscribers and topics
+- Integrations and provider credentials
+- Activity feed and webhooks
+
+This isolation lets teams safely iterate on notification logic in development without ever touching production data.
+
+### Workflows and triggers
+
+A **workflow** is the blueprint for how Novu delivers a notification. It defines a sequence of steps — channel steps that send messages, and action steps that control timing and batching.
+
+Workflows are environment-specific and versioned. You trigger them from your backend by calling Novu's API with:
+
+- The environment's **secret key** for authentication.
+- The **`workflowId`** (unique identifier) of the workflow to run.
+- The **`subscriberId`** of the user to notify (or a topic key for group delivery).
+- An optional **`payload`** to personalize message content (e.g., `{{firstName}}`, `{{orderId}}`).
+
+Each trigger creates an event that moves through the workflow step by step. If a step fails — for example, due to a provider error — Novu retries it automatically without re-executing earlier steps.
+
+<Tip>
+  Design and test workflows in your development environment first, then publish them to production when they're ready. See [Environments](/concepts/environments) for details.
+</Tip>
+
+### Subscribers and topics
+
+A **subscriber** represents a user in your system within a given environment. Each subscriber has:
+
+- A unique **`subscriberId`** — typically your internal user ID.
+- **Channel identifiers** — email address, phone number, or push device tokens.
+- **Personal details** — `firstName`, `lastName`, `locale`, and similar fields you can reference in templates.
+- **Custom metadata** — a flexible `data` JSON object for any additional user context.
+- **Notification preferences** — per-channel and per-workflow opt-in settings.
+
+When you need to notify a group of users at once, use **topics**. A topic is a named group of subscribers. Triggering a workflow to a topic creates a separate notification event for each subscriber in the group — all from a single API call.
+
+### Channels and the Inbox component
+
+A **channel** is a delivery medium: email, SMS, push, chat, or in-app. Channel steps in a workflow each target one medium and contain their own message template.
+
+The **in-app channel** is special: it delivers messages to the [`<Inbox />`](/platform/inbox) component embedded in your frontend. Unlike external channels, the Inbox needs no third-party provider — it connects directly to Novu using your environment's `applicationIdentifier` and renders notifications in real time.
+
+### Integrations
+
+**Integrations** are your configured connections to external delivery providers such as SendGrid (email), Twilio (SMS), Firebase Cloud Messaging (push), or Slack (chat). Each integration is scoped to one environment, so test credentials in development never mix with production credentials.
+
+When a workflow step executes, Novu resolves the correct integration for that channel and routes the message through it. If no active integration exists for a required channel, the step fails.
+
+<Note>
+  The in-app channel does not require an integration — Novu handles in-app delivery internally.
+</Note>
+
+## How it all connects
+
+Follow an end-to-end notification through the Novu pipeline:
+
+<Steps>
+
+### Your app triggers a workflow
+
+Your backend calls Novu's API with the environment secret key, `workflowId`, `subscriberId`, and an optional payload:
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY>" });
+
+await novu.trigger({
+  workflowId: "order-confirmation",
+  to: { subscriberId: "user_123" },
+  payload: {
+    orderId: "ORD-456",
+    firstName: "Ada",
+  },
+});
+```
+
+### Novu resolves the subscriber
+
+Novu looks up the subscriber by `subscriberId` in the current environment. It reads:
+- Channel-specific identifiers (email address, phone number, device tokens).
+- Notification preferences, which can alter delivery behavior.
+- Custom metadata available for template personalization.
+
+### Workflow steps execute sequentially
+
+Each step is evaluated in order. Channel steps (email, SMS, in-app, push, chat) render and deliver a message. Action steps (delay, digest) control timing or batch multiple events into one message.
+
+Step conditions can skip individual steps based on subscriber fields, payload values, or the outcome of previous steps — for example, sending a follow-up SMS only if an in-app message was unread after 24 hours.
+
+### Messages are delivered via integrations
+
+Novu routes each message through the environment's configured integration for that channel:
+- An **email** step uses a provider like SendGrid or Mailgun.
+- An **in-app** step delivers the message to the `<Inbox />` component in your frontend.
+- An **SMS** step uses a provider like Twilio.
+- A **push** step uses FCM or OneSignal.
+
+### Logs and metadata are recorded
+
+Every triggered workflow generates an event with a unique `transactionId`. Novu records which steps ran, whether each succeeded or failed, delivery timing, and the messages generated. You can inspect all of this in the [Activity Feed](https://dashboard.novu.co/activity-feed).
+
+</Steps>
+
+## Explore the concepts
+
+<CardGroup cols={2}>
+  <Card title="Workflows" icon="diagram-project" href="/concepts/workflows">
+    Channel steps, action steps, identifiers, statuses, tags, and triggering.
+  </Card>
+  <Card title="Subscribers" icon="users" href="/concepts/subscribers">
+    Profile structure, creation methods, preferences, and personalization.
+  </Card>
+  <Card title="Topics" icon="layer-group" href="/concepts/topics">
+    Fan-out notifications to groups of subscribers with a single API call.
+  </Card>
+  <Card title="Integrations" icon="plug" href="/concepts/integrations">
+    Connect Novu to email, SMS, push, and chat providers.
+  </Card>
+  <Card title="Environments" icon="server" href="/concepts/environments">
+    Isolate development and production workflows, keys, and subscribers.
+  </Card>
+  <Card title="Inbox Component" icon="bell" href="/inbox/overview">
+    Embed real-time in-app notifications directly in your frontend.
+  </Card>
+</CardGroup>

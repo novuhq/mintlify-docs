@@ -1,0 +1,130 @@
+---
+title: "Environments: Isolate Dev and Production Workflows"
+sidebarTitle: "Environments"
+description: "Novu environments keep your development and production notifications separate. Each environment has its own API keys, workflows, subscribers, and integrations."
+---
+
+Environments in Novu give you safe, isolated spaces to build and test notification workflows before they reach live users. Every Novu organization starts with two environments — **Development** and **Production** — and you can promote changes from one to the other in a controlled, deliberate way.
+
+## Types of environments
+
+When you create a Novu account, two environments are provisioned automatically:
+
+- **Development** — The sandbox where you build, iterate, and test. Create new workflows, experiment with configurations, and validate notification behavior without any risk to live users. All workflow changes originate here.
+- **Production** — The live environment where notifications reach real subscribers. To prevent unintended changes, workflows in production are **view-only**. You make changes in development (or another non-production environment) and then publish them to production.
+- **Custom environments** (Team and Enterprise plans only) — Create additional environments to match your release process, such as staging or QA.
+
+## What's isolated per environment
+
+Each environment is fully independent. Data and configuration in one environment have no connection to any other environment.
+
+### Environment-specific resources
+
+These resources are completely separate and unique to each environment:
+
+| Resource | Description |
+|----------|-------------|
+| **API Keys** | Each environment has its own application identifier (public, for `<Inbox />`) and secret key (private, for backend API calls). |
+| **Integrations** | Provider credentials and configurations — test credentials in development, live credentials in production. |
+| **Subscribers** | User profiles and their notification preferences. A subscriber created in development is not visible in production. |
+| **Topics** | Subscriber groups. Topic keys must be unique within each environment. |
+| **Activity feed** | Execution logs and delivery history for triggered workflows. |
+| **Webhooks** | Outbound webhook configurations. |
+
+### Publishable assets
+
+These assets are authored in development and then promoted to other environments:
+
+| Asset | Description |
+|-------|-------------|
+| **Workflows** | The notification logic you build in the workflow editor. |
+| **Layouts** | Shared email layout templates. |
+| **Translations** | Localized content strings. |
+
+## Environment credentials
+
+Each environment has two unique credentials you use to connect Novu to your application:
+
+<CardGroup cols={2}>
+  <Card title="Application Identifier" icon="key">
+    A **public** identifier used on the client side — passed to the `<Inbox />` component to scope real-time notifications to the correct environment. Safe to include in frontend code.
+  </Card>
+  <Card title="API Secret Key" icon="lock">
+    A **private** key used for backend API authentication. Keep this secret — never expose it in client-side code or public repositories.
+  </Card>
+</CardGroup>
+
+Find both values under **API Keys** in the Novu dashboard. Configure your application to use the correct environment's credentials based on where it's running.
+
+<Warning>
+  Never use your production secret key in development or staging code. Keep credentials environment-specific at all times.
+</Warning>
+
+## Publishing workflows to other environments
+
+Novu's publish mechanism lets you promote validated changes from development to production (or any other environment) in a controlled, reviewable way.
+
+<Steps>
+
+### Work in the Development environment
+
+All workflow changes must originate in the Development environment. Switch to it using the environment selector in the top navigation.
+
+### Click "Publish changes"
+
+When you're ready to promote, click **Publish changes** in the dashboard. A list of available target environments appears.
+
+### Select a target environment
+
+Choose the environment you want to publish to (e.g., Production).
+
+### Select the workflows to publish
+
+A modal shows all workflows with unpublished changes. Select the checkboxes next to the workflows you want to promote.
+
+### Confirm the publish
+
+Click the publish button. Novu copies the selected workflows to the target environment while preserving their workflow identifiers — existing triggers continue to work without any changes to your application code.
+
+</Steps>
+
+<Note>
+  When a workflow is published, its **identifier remains the same** across environments. This means your trigger calls use the same `workflowId` in both development and production — only the secret key changes.
+</Note>
+
+## Creating a custom environment
+
+Custom environments are available on Team and Enterprise plans.
+
+<Steps>
+
+### Open the Environments page
+
+In the Novu dashboard, click **Environments** in the sidebar or navigate directly to [dashboard.novu.co/environments](https://dashboard.novu.co/environments).
+
+### Create a new environment
+
+Click **Create environment**. Enter a name (e.g., `Staging`) and assign a color to make it easy to distinguish from other environments at a glance.
+
+### Confirm creation
+
+Click **Create environment**. The new environment is immediately available and has its own isolated set of resources and credentials.
+
+</Steps>
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Never edit workflows in production" icon="shield-halved">
+    Always make changes in development and publish them. This gives you a review step before anything reaches live users.
+  </Card>
+  <Card title="Use separate provider credentials" icon="key">
+    Configure test credentials (e.g., Twilio test mode, SendGrid sandbox) in development to avoid sending real messages during testing.
+  </Card>
+  <Card title="Mirror your deployment pipeline" icon="arrows-rotate">
+    If your app has staging and production deployments, create matching Novu environments so notification behavior matches across your entire stack.
+  </Card>
+  <Card title="Rotate API keys per environment" icon="rotate">
+    Treat each environment's secret key independently. Rotate them separately and never share keys across environments.
+  </Card>
+</CardGroup>

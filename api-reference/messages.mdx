@@ -1,0 +1,169 @@
+---
+title: "Messages API: Query and Delete Notifications"
+sidebarTitle: "Messages"
+description: "Use the Novu Messages API to retrieve notification history and delete individual messages. Access delivery status and metadata for sent notifications."
+---
+
+Messages represent individual notifications sent through Novu. Each message is created when a workflow step executes and tracks the delivery status, channel, content, and metadata for that notification. Use the Messages API to query notification history and remove messages you no longer need.
+
+## List all messages
+
+Retrieve a paginated list of messages for your environment. Filter by channel, subscriber, or transaction ID.
+
+```
+GET https://api.novu.co/v1/messages
+```
+
+### Query parameters
+
+<ParamField query="channel" type="string">
+  Filter messages by channel type. Values: `email`, `sms`, `in_app`, `chat`, `push`.
+</ParamField>
+
+<ParamField query="subscriberId" type="string">
+  Filter messages sent to a specific subscriber.
+</ParamField>
+
+<ParamField query="transactionId" type="string">
+  Filter messages by the transaction ID from a trigger event.
+</ParamField>
+
+<ParamField query="page" type="number">
+  Page number for pagination (zero-based). Defaults to `0`.
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Number of messages to return per page. Defaults to `10`.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl "https://api.novu.co/v1/messages?subscriberId=user-123&channel=email" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY"
+```
+
+```javascript JavaScript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+const messages = await novu.messages.list({
+  subscriberId: 'user-123',
+  channel: 'email',
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v1/messages"
+headers = {"Authorization": f"ApiKey {NOVU_SECRET_KEY}"}
+params = {"subscriberId": "user-123", "channel": "email"}
+
+response = requests.get(url, headers=headers, params=params)
+print(response.json())
+```
+</CodeGroup>
+
+---
+
+## Delete a message
+
+Permanently delete a single message by its `messageId`. This action is irreversible.
+
+```
+DELETE https://api.novu.co/v1/messages/{messageId}
+```
+
+### Path parameters
+
+<ParamField path="messageId" type="string" required>
+  The MongoDB ObjectID of the message to delete. Obtain this from the message list response or the activity feed.
+</ParamField>
+
+### Response
+
+Returns `200 OK` on success.
+
+<ResponseField name="acknowledged" type="boolean" required>
+  `true` when the deletion was successful.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Always `"deleted"` on success.
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE "https://api.novu.co/v1/messages/507f1f77bcf86cd799439011" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY"
+```
+
+```javascript JavaScript
+await novu.messages.delete('507f1f77bcf86cd799439011');
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v1/messages/507f1f77bcf86cd799439011"
+headers = {"Authorization": f"ApiKey {NOVU_SECRET_KEY}"}
+
+response = requests.delete(url, headers=headers)
+print(response.json())
+```
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "acknowledged": true,
+  "status": "deleted"
+}
+```
+
+---
+
+## Delete messages by transactionId
+
+Delete all messages associated with a specific transaction. Useful when you need to remove all notifications triggered by a single event across multiple channels.
+
+```
+DELETE https://api.novu.co/v1/messages/transaction/{transactionId}
+```
+
+### Path parameters
+
+<ParamField path="transactionId" type="string" required>
+  The transaction ID returned by the trigger event endpoint.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="channel" type="string">
+  Optionally restrict deletion to messages on a specific channel. If omitted, all messages for the transaction are deleted.
+</ParamField>
+
+<Warning>
+  Deleting messages is permanent and cannot be undone. This will remove messages from the activity feed and subscriber notification history.
+</Warning>
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Trigger Event" icon="bolt" href="/api-reference/trigger-event">
+    Send notifications that create messages.
+  </Card>
+  <Card title="Subscribers" icon="users" href="/api-reference/subscribers">
+    Query subscribers to filter messages by recipient.
+  </Card>
+  <Card title="Idempotency" icon="rotate" href="/api-reference/idempotency">
+    Use transactionId to prevent duplicate messages on retry.
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api-reference/rate-limiting">
+    Understand limits for message query endpoints (Global category).
+  </Card>
+</CardGroup>

@@ -1,0 +1,116 @@
+---
+title: "Deploy Novu Framework Workflows to Production"
+sidebarTitle: "Production"
+description: "Checklist and best practices for deploying your Novu Framework Bridge endpoint to production, including security, syncing, and environment setup."
+---
+
+Before your Novu Framework workflows can deliver notifications to real subscribers, you need to deploy your Bridge endpoint to a publicly accessible URL, configure the right secrets, and sync your workflow definitions to the Novu Production environment. This page walks you through the full checklist and the security model that protects your endpoint in production.
+
+## Production Deployment Checklist
+
+Work through each item before you start sending production notifications:
+
+<Steps>
+  <Step title="Deploy your application">
+    Deploy your application to your preferred hosting provider (Vercel, AWS, Railway, Fly.io, etc.). Make sure the `/api/novu` route — or wherever you mounted the `serve` handler — is publicly reachable over HTTPS.
+
+    <Warning>
+      Novu Cloud workers need to reach your Bridge endpoint from the internet. Ensure your firewall and security group rules allow inbound HTTPS traffic. Due to Novu Cloud's autoscaling architecture, there is no fixed set of IP addresses you can allowlist — you must accept traffic from any source.
+    </Warning>
+  </Step>
+
+  <Step title="Set NOVU_SECRET_KEY in production">
+    Your production `NOVU_SECRET_KEY` must be set as an environment variable in your hosting environment. This is the key that Novu uses to sign requests and the key your `serve` handler uses to verify them.
+
+    ```bash
+    # Example: set on Vercel via CLI
+    vercel env add NOVU_SECRET_KEY production
+
+    # Example: set on Railway
+    railway variables set NOVU_SECRET_KEY=<YOUR_SECRET_KEY>
+    ```
+
+    <Warning>
+      Use a separate `NOVU_SECRET_KEY` for each environment (development, staging, production). Never reuse keys across environments or commit them to source control.
+    </Warning>
+  </Step>
+
+  <Step title="Verify HMAC verification is active">
+    HMAC signature verification is **enabled automatically** when `NODE_ENV=production`. The Novu Framework verifies the `Novu-Signature` header on every inbound request from Novu Cloud — you do not need to write any verification code yourself.
+
+    Confirm your runtime environment sets `NODE_ENV=production`. Most hosting providers do this automatically for production deployments.
+  </Step>
+
+  <Step title="Sync workflows to Production">
+    After deploying, sync your workflow definitions to the Novu Production environment using the CLI:
+
+    ```bash
+    npx novu@latest sync \
+      --bridge-url https://your-app.com/api/novu \
+      --secret-key $NOVU_SECRET_KEY \
+      --api-url https://api.novu.co
+    ```
+
+    For EU region accounts, use `--api-url https://eu.api.novu.co`.
+
+    After syncing, your workflows appear in the Novu dashboard as **Active** and can be triggered via the API.
+  </Step>
+
+  <Step title="Automate syncing in CI/CD">
+    Add the `sync` command as a post-deploy step in your CI/CD pipeline so your workflow definitions stay in sync with every production deployment:
+
+    ```yaml
+    - name: Sync Novu workflows to production
+      run: |
+        npx novu@latest sync \
+          --bridge-url $BRIDGE_URL \
+          --secret-key $NOVU_SECRET_KEY
+      env:
+        BRIDGE_URL: https://your-app.com/api/novu
+        NOVU_SECRET_KEY: ${{ secrets.NOVU_SECRET_KEY }}
+    ```
+
+    See [Syncing](/framework/syncing) for more detail on CI/CD integrations and the GitOps workflow.
+  </Step>
+
+  <Step title="Verify workflows are active">
+    Open the [Novu dashboard](https://dashboard.novu.co) and navigate to **Workflows**. Confirm each workflow shows as **Active** and that its steps and controls reflect your latest code. Trigger a test notification from the dashboard to verify end-to-end delivery.
+  </Step>
+</Steps>
+
+## Security Overview
+
+Novu Framework's production security model is built around HMAC signatures:
+
+<CardGroup cols={2}>
+  <Card title="Request Signing" icon="signature">
+    Every request Novu Cloud sends to your Bridge endpoint includes a `Novu-Signature` header containing a timestamp (`t=`) and a `v1` HMAC signature derived from your secret key.
+  </Card>
+  <Card title="Automatic Verification" icon="shield-check">
+    The `serve` handler verifies the signature on every inbound request. Invalid or missing signatures are rejected with a `401` response — no configuration needed.
+  </Card>
+  <Card title="Environment Separation" icon="layer-group">
+    HMAC verification is on in `production` and off in `development`, so your Local Studio can reach the endpoint without credentials during development.
+  </Card>
+  <Card title="Compliance" icon="certificate">
+    Novu Cloud workers are GDPR, SOC 2 Type II, and ISO 27001 compliant. Data in transit is encrypted via TLS.
+  </Card>
+</CardGroup>
+
+## Secrets Management Best Practices
+
+- Store `NOVU_SECRET_KEY` in your CI/CD provider's secrets store (GitHub Actions Secrets, GitLab CI Variables, etc.) and reference it as an environment variable.
+- Rotate your secret key in the Novu dashboard immediately if you suspect it has been compromised. Update the corresponding environment variable in your hosting provider and redeploy.
+- Use a different secret key per environment — development, staging, and production each get their own key.
+- Never log the secret key or include it in error messages.
+
+## Environment Variables Reference
+
+| Variable | Required | Description |
+|---|---|---|
+| `NOVU_SECRET_KEY` | Yes | Your Novu account secret key. Used for HMAC verification. |
+| `NODE_ENV` | Yes | Set to `production` to enable HMAC verification. |
+
+<Tip>
+  After a successful production sync, test the full notification flow end-to-end by triggering a workflow for a real (or test) subscriber. Confirm the notification is delivered via the expected channel before enabling the workflow for all users.
+</Tip>

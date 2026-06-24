@@ -1,0 +1,180 @@
+---
+title: "Set Up the Novu Inbox Component"
+sidebarTitle: "Setup"
+description: "Install and configure the Novu Inbox component to display real-time notifications in your application. Supports Next.js, React, Vue, and Vanilla JS."
+---
+
+The Inbox component displays a notification bell by default. When a user clicks it, a popover opens showing their notifications and preferences. This guide walks you through installing the package, trying keyless mode, and connecting the Inbox to real subscribers.
+
+## Install the Package
+
+Choose the package that matches your framework:
+
+<Tabs>
+  <Tab title="Next.js">
+    <CodeGroup>
+      ```bash npm
+      npm install @novu/nextjs
+      ```
+      ```bash yarn
+      yarn add @novu/nextjs
+      ```
+      ```bash pnpm
+      pnpm add @novu/nextjs
+      ```
+    </CodeGroup>
+  </Tab>
+  <Tab title="React">
+    <CodeGroup>
+      ```bash npm
+      npm install @novu/react
+      ```
+      ```bash yarn
+      yarn add @novu/react
+      ```
+      ```bash pnpm
+      pnpm add @novu/react
+      ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Try Inbox in Keyless Mode
+
+Keyless mode lets you test the look and features of the Inbox component instantly — no setup required. The component renders immediately with sample notifications so you can explore the UI before wiring up your account.
+
+<Tabs>
+  <Tab title="Next.js">
+    ```jsx
+    import { Inbox } from '@novu/nextjs';
+
+    export function Novu() {
+      return (
+        <Inbox />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```jsx
+    import { Inbox } from '@novu/react';
+
+    export function Novu() {
+      return (
+        <Inbox />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+  Keyless mode is for testing only. Data is temporary and expires after 24 hours. It is not tied to real subscribers and must not be used in production.
+</Warning>
+
+## Connect the Inbox to Real Subscribers
+
+To display real-time notifications for your users, connect the Inbox to your Novu environment using your `applicationIdentifier` and a `subscriberId`. You can create and manage subscribers from the [Novu Dashboard](https://dashboard.novu.co/subscribers).
+
+<Steps>
+  <Step title="Retrieve your Application Identifier">
+    Sign in to the [Novu Dashboard](https://dashboard.novu.co) and navigate to **Settings**. Copy your **Application Identifier**.
+  </Step>
+  <Step title="Identify your subscriber">
+    A subscriber in Novu maps to a user in your application. Pass the user's unique ID as the `subscriber` prop. Novu automatically creates the subscriber record on first use if it does not already exist.
+  </Step>
+  <Step title="Render the Inbox component">
+    Add the Inbox component to your application with the required props:
+
+    <Tabs>
+      <Tab title="Next.js">
+        ```jsx
+        import { Inbox } from '@novu/nextjs';
+
+        export function Novu() {
+          return (
+            <Inbox
+              applicationIdentifier="APPLICATION_IDENTIFIER"
+              subscriber="SUBSCRIBER_ID"
+            />
+          );
+        }
+        ```
+      </Tab>
+      <Tab title="React">
+        ```jsx
+        import { Inbox } from '@novu/react';
+
+        export function Novu() {
+          return (
+            <Inbox
+              applicationIdentifier="APPLICATION_IDENTIFIER"
+              subscriber="SUBSCRIBER_ID"
+            />
+          );
+        }
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## EU Region Configuration
+
+If your Novu account is hosted in the EU region, include the `backendUrl` and `socketUrl` props to connect to the EU-specific API endpoints. Without these props, the Inbox defaults to the US region.
+
+<Tabs>
+  <Tab title="Next.js">
+    ```jsx
+    import { Inbox } from '@novu/nextjs';
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+          backendUrl="https://eu.api.novu.co"
+          socketUrl="wss://eu.socket.novu.co"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```jsx
+    import { Inbox } from '@novu/react';
+
+    export function Novu() {
+      return (
+        <Inbox
+          applicationIdentifier="APPLICATION_IDENTIFIER"
+          subscriber="SUBSCRIBER_ID"
+          backendUrl="https://eu.api.novu.co"
+          socketUrl="wss://eu.socket.novu.co"
+        />
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  The `backendUrl` and `socketUrl` props are only required for EU-region accounts. US-region accounts do not need these props.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Customize Appearance" icon="paintbrush" href="/inbox/customization">
+    Override styles, swap icons, and theme the Inbox to match your design system.
+  </Card>
+  <Card title="Configure Preferences" icon="sliders" href="/inbox/preferences">
+    Let users manage which notifications they receive and on which channels.
+  </Card>
+  <Card title="Headless Mode" icon="code" href="/inbox/headless">
+    Build a fully custom UI using Novu's React hooks without the default styles.
+  </Card>
+  <Card title="Create a Workflow" icon="diagram-project" href="/workflows/create">
+    Define notification workflows to trigger in-app messages through the Inbox.
+  </Card>
+</CardGroup>

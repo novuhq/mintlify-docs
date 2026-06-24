@@ -1,0 +1,181 @@
+---
+title: "Push Integrations: Mobile and Web Push Notifications"
+sidebarTitle: "Push"
+description: "Send mobile and web push notifications through Novu using FCM, APNs, OneSignal, Expo, and other push providers. All active providers run in parallel."
+---
+
+The Push channel delivers notifications directly to your users' devices — whether mobile (iOS or Android), desktop, or web browser. Connect one or more push providers through the Integration Store, store subscriber device tokens, and Novu handles the rest. Unlike email and SMS, push delivers through **all active push integrations simultaneously**, giving you full coverage across every platform your users are on.
+
+## How Push Works in Novu
+
+<Steps>
+  <Step title="Add a push provider in the Integration Store">
+    Open the [Integration Store](https://dashboard.novu.co/integrations) and connect a push provider such as FCM, APNs, or OneSignal. You can add multiple integrations — even multiple instances of the same provider — each with independent credentials and configuration.
+  </Step>
+  <Step title="Add a Push step to your workflow">
+    In the workflow editor, add a **Push** step. Define the notification title, body, and any additional data payload to be delivered to the device.
+  </Step>
+  <Step title="Register subscriber device tokens">
+    Each subscriber must have at least one valid device token for each push provider you want to use. Store these tokens in the subscriber's Novu profile before triggering the workflow.
+  </Step>
+  <Step title="Trigger the workflow">
+    Call the [Trigger Event API](https://docs.novu.co/api-reference/events/trigger-event) from your server. Novu resolves the subscriber, retrieves their device tokens, and delivers the push notification through every active push integration in parallel.
+  </Step>
+</Steps>
+
+<Note>
+Push notifications do not have a single "primary" integration. When a workflow runs, Novu delivers through **all** active push integrations using the device tokens stored for each provider.
+</Note>
+
+## Managing Device Tokens
+
+Device tokens are unique identifiers that push providers use to address a specific device. Each subscriber can hold a maximum of **100 device tokens per provider**. Remove stale or unused tokens regularly to stay within this limit.
+
+### Adding Tokens Just-in-Time
+
+Pass device tokens inline when triggering a workflow. Novu updates the subscriber profile with these tokens before sending the notification.
+
+```javascript
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+await novu.trigger({
+  workflowId: "new-message",
+  to: {
+    subscriberId: "subscriber_123",
+    channels: [
+      {
+        providerId: ChatOrPushProviderEnum.Fcm,
+        credentials: {
+          deviceTokens: ["device-token-abc", "device-token-xyz"],
+        },
+      },
+    ],
+  },
+  payload: {},
+});
+```
+
+### Adding Tokens Ahead of Time
+
+Register device tokens on the subscriber profile in advance — for example, when a user logs in or grants notification permissions:
+
+```javascript
+import { ChatOrPushProviderEnum } from "@novu/api/models/components";
+
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Fcm,
+    credentials: {
+      deviceTokens: ["device-token-abc", "device-token-xyz"],
+    },
+  },
+  "subscriber_123"
+);
+```
+
+### Targeting a Specific Integration
+
+If you run multiple integrations for the same provider (e.g., one FCM integration for Android and one for web), use `integrationIdentifier` to associate tokens with the correct integration:
+
+```javascript
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Fcm,
+    integrationIdentifier: "fcm-web-prod",
+    credentials: {
+      deviceTokens: ["web-push-token-123"],
+    },
+  },
+  "subscriber_123"
+);
+```
+
+### Removing Device Tokens
+
+Remove a specific token when a user logs out of a device to prevent notifications from reaching the wrong person:
+
+```javascript
+// 1. Fetch the subscriber's current token list
+const { data: subscriber } = await novu.subscribers.get("subscriber_123");
+const currentTokens = subscriber.credentials?.fcm?.deviceTokens ?? [];
+
+// 2. Filter out the token to remove
+const updatedTokens = currentTokens.filter((t) => t !== "stale-token-to-remove");
+
+// 3. Update the subscriber
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Fcm,
+    credentials: { deviceTokens: updatedTokens },
+  },
+  "subscriber_123"
+);
+```
+
+To remove **all tokens** for a provider, update with an empty array:
+
+```javascript
+await novu.subscribers.credentials.update(
+  {
+    providerId: ChatOrPushProviderEnum.Fcm,
+    credentials: { deviceTokens: [] },
+  },
+  "subscriber_123"
+);
+```
+
+<Tip>
+Novu automatically removes invalid or expired device tokens from subscriber profiles for FCM and Expo providers. When a token is removed, Novu sends the failure details via a `message.failed` webhook event.
+</Tip>
+
+## Connecting FCM (Step-by-Step Example)
+
+Firebase Cloud Messaging (FCM) is the most widely used push provider for Android and web. Novu uses the FCM HTTP v1 API.
+
+<Steps>
+  <Step title="Generate a Firebase service account key">
+    1. Open the [Firebase Console](https://console.firebase.google.com) and select your project.
+    2. Click the gear icon ⚙️ → **Project settings**.
+    3. Go to the **Service accounts** tab.
+    4. Click **Generate new private key** → **Generate key**.
+    5. Download and securely store the resulting JSON file.
+  </Step>
+  <Step title="Connect FCM in the Integration Store">
+    1. In the [Novu dashboard](https://dashboard.novu.co/integrations), click **Add a Provider**.
+    2. Select the **Push** tab, then choose **Firebase Cloud Messaging (FCM)**.
+    3. Open the downloaded JSON file, copy its entire contents, and paste it into the **Service Account** field.
+    4. Click **Create Integration**.
+  </Step>
+  <Step title="Register a subscriber's device token">
+    Use the `subscribers.credentials.update` method (shown above) to store the FCM registration token for each subscriber who should receive push notifications.
+  </Step>
+  <Step title="Trigger a push notification">
+    Add a Push step to a workflow and trigger it from your application code. Novu delivers the notification to all registered FCM tokens for that subscriber.
+  </Step>
+</Steps>
+
+## Supported Providers
+
+<CardGroup cols={2}>
+  <Card title="Firebase Cloud Messaging (FCM)" icon="fire">
+    Google's cross-platform push solution for Android, iOS, and web.
+  </Card>
+  <Card title="Apple Push Notification Service (APNs)" icon="apple">
+    Native iOS and macOS push notifications via Apple's gateway.
+  </Card>
+  <Card title="OneSignal" icon="bell">
+    Multi-platform push with a feature-rich dashboard and analytics.
+  </Card>
+  <Card title="Expo Push" icon="mobile-screen">
+    Simplified push notifications for React Native apps built with Expo.
+  </Card>
+  <Card title="Pusher Beams" icon="bolt">
+    Reliable push for iOS, Android, and web with Pusher infrastructure.
+  </Card>
+  <Card title="Pushpad" icon="desktop">
+    Web push notifications with no SDK required.
+  </Card>
+  <Card title="Push Webhook" icon="webhook">
+    Forward push events to your own endpoint for custom delivery logic.
+  </Card>
+</CardGroup>

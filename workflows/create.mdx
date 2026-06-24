@@ -1,0 +1,136 @@
+---
+title: "Create and Manage Workflows in Novu"
+sidebarTitle: "Create Workflow"
+description: "Build notification workflows in the Novu dashboard. Define steps, set a workflow identifier, and configure delivery for email, SMS, push, and more."
+---
+
+A workflow in Novu defines how notifications are delivered for a specific event. It contains the steps, templates, and rules that control what messages are sent, to whom, and across which channels. Every notification your application sends is routed through a workflow.
+
+You can create workflows in the Novu dashboard, via the [Novu API](https://docs.novu.co/api-reference/workflows/create-a-workflow), or in code using the [Novu Framework](https://docs.novu.co/framework/introduction). This guide focuses on creating and managing workflows in the dashboard.
+
+<Note>
+  Workflows can only be created and edited in the **development** environment. Once ready, sync them to other environments (staging, production) from the dashboard.
+</Note>
+
+## Create a Workflow from Scratch
+
+<Steps>
+  <Step title="Open the Workflows page">
+    Go to the [Novu Dashboard](https://dashboard.novu.co) and navigate to **Workflows** in the left sidebar.
+  </Step>
+  <Step title="Start a new workflow">
+    Click **Create workflow**.
+  </Step>
+  <Step title="Fill in the workflow details">
+    Complete the following fields in the creation dialog:
+
+    - **Name** *(required)*: The display name shown in the dashboard. You can change this later in the workflow editor.
+    - **Identifier** *(required)*: The `workflowId` used when triggering the workflow via API. It must be in slug format (letters, numbers, hyphens, dots, and underscores only) and must be unique within the environment.
+    - **Tags** *(optional)*: Labels to organize and categorize workflows. Tags can also be used to filter notifications in the `<Inbox />` component.
+    - **Description** *(optional)*: Documents the workflow's purpose for your team.
+
+    <Warning>
+      The workflow **Identifier** (`workflowId`) is immutable after creation. Choose it carefully — it's required when triggering the workflow and cannot be changed later.
+    </Warning>
+  </Step>
+  <Step title="Enable translations (optional)">
+    Toggle **Enable translations** to support multiple locales for this workflow. You can also enable this after creation from the workflow editor.
+  </Step>
+  <Step title="Create the workflow">
+    Click **Create workflow**. You're redirected to the Workflow Editor, where you can add and configure steps.
+  </Step>
+</Steps>
+
+## Create a Workflow from a Template
+
+Templates are pre-built workflows for common notification scenarios. They include pre-configured steps, sample content, and pre-filled details that you can customize to fit your needs.
+
+<Steps>
+  <Step title="Open the Workflows page">
+    Navigate to **Workflows** in the [Novu Dashboard](https://dashboard.novu.co).
+  </Step>
+  <Step title="Access templates">
+    Use either of these options:
+    - Click the arrow next to the **Create workflow** button and select **From template**.
+    - Click **Explore templates** to browse the full template library.
+  </Step>
+  <Step title="Select a template">
+    Browse the available templates and select one that matches your use case.
+  </Step>
+  <Step title="Create the workflow">
+    Click **Create workflow**. The workflow opens in the editor with pre-configured steps ready for customization.
+  </Step>
+</Steps>
+
+## Manage Existing Workflows
+
+### Update a Workflow
+
+Click any workflow in the Workflows page to open the editor. From there you can:
+
+- Update the name and description (the identifier cannot be changed)
+- Add or remove workflow tags
+- Change the [workflow status](#workflow-status)
+- Configure channel preferences and payload schema
+- Add, remove, or reorder steps
+
+### Duplicate a Workflow
+
+Duplicating a workflow lets you reuse an existing configuration as a starting point. This is useful when workflows share similar logic but differ in trigger identifiers, content, or steps.
+
+<Steps>
+  <Step title="Find the workflow">
+    Locate the workflow on the Workflows page.
+  </Step>
+  <Step title="Open the context menu">
+    Click the three-dot menu (**•••**) on the workflow card.
+  </Step>
+  <Step title="Select Duplicate">
+    Choose **Duplicate workflow**, provide a new name and identifier, then click **Duplicate Workflow**.
+  </Step>
+</Steps>
+
+### Delete a Workflow
+
+<Warning>
+  Deleting a workflow is **permanent and cannot be undone**. Any existing triggers referencing the deleted workflow will fail with a `workflow not found` error. Execution history is preserved in the Novu Activity Feed.
+</Warning>
+
+<Steps>
+  <Step title="Find the workflow">
+    Locate the workflow on the Workflows page.
+  </Step>
+  <Step title="Open the context menu">
+    Click the three-dot menu (**•••**) on the workflow card.
+  </Step>
+  <Step title="Delete and confirm">
+    Select **Delete**, then confirm the deletion in the dialog.
+  </Step>
+</Steps>
+
+## Workflow Status
+
+A workflow is active by default after creation. You can change its status at any time from the workflow editor.
+
+| Status | Description |
+|---|---|
+| **Active** | The workflow can be triggered and will execute normally. |
+| **Inactive** | The workflow is paused. Triggers will not execute, but you can still edit steps. |
+| **Action required** | The workflow contains errors (e.g., missing required fields). It can still be triggered but may not deliver correctly. |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Add Steps" icon="plus" href="/workflows/steps">
+    Learn about channel steps (email, in-app, SMS, push, chat) and action steps (delay, digest).
+  </Card>
+  <Card title="Trigger a Workflow" icon="play" href="/workflows/triggers">
+    Send notifications by triggering a workflow via the REST API or SDK.
+  </Card>
+  <Card title="Configure Preferences" icon="sliders" href="/workflows/preferences">
+    Set default channel preferences and mark workflows as critical.
+  </Card>
+  <Card title="Digest Step" icon="layer-group" href="/workflows/digest">
+    Batch multiple events into a single notification to reduce noise.
+  </Card>
+</CardGroup>

@@ -1,0 +1,235 @@
+---
+title: "Java Server SDK for Novu Notifications"
+sidebarTitle: "Java"
+description: "Use the Novu Java SDK to trigger notifications and manage subscribers from your Java application. Add the Maven dependency and initialize with your secret key."
+---
+
+The Novu Java SDK wraps the [Novu REST API](https://api.novu.co/v1) in a fluent Java client with a builder pattern. Use it to trigger notification workflows, manage subscribers, and integrate Novu into any Java application or Spring Boot service.
+
+<Info>
+  The source code for this SDK is available on [GitHub](https://github.com/novuhq/novu-java). JDK 11 or later is required.
+</Info>
+
+## Installation
+
+Add the Novu Java SDK to your project using Maven or Gradle.
+
+<Tabs>
+  <Tab title="Maven">
+    Add the following dependency to your `pom.xml`:
+
+    ```xml
+    <dependency>
+        <groupId>co.novu</groupId>
+        <artifactId>novu-java</artifactId>
+        <version>LATEST</version>
+    </dependency>
+    ```
+  </Tab>
+  <Tab title="Gradle">
+    Add the following line to your `build.gradle` dependencies block:
+
+    ```groovy
+    implementation 'co.novu:novu-java:LATEST'
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  Check [GitHub](https://github.com/novuhq/novu-java#sdk-installation) for the latest published version number.
+</Note>
+
+---
+
+## Initialization
+
+Use `Novu.builder()` to create an SDK instance. Pass your secret key via `secretKey()`. Load the key from an environment variable to keep it out of source control.
+
+```java
+import co.novu.Novu;
+
+Novu sdk = Novu.builder()
+        .secretKey(System.getenv("NOVU_SECRET_KEY"))
+        .build();
+```
+
+<Warning>
+  Your secret key grants full API access. Use environment variables, a secrets manager, or Spring's `@Value` annotation to inject it securely — never hardcode it.
+</Warning>
+
+For the EU region, chain `serverURL()` in the builder:
+
+```java
+Novu sdk = Novu.builder()
+        .secretKey(System.getenv("NOVU_SECRET_KEY"))
+        .serverURL("https://eu.api.novu.co")
+        .build();
+```
+
+---
+
+## Trigger a Workflow
+
+Call `sdk.trigger()` to fire a notification workflow. Build a `TriggerEventRequestDto` using its builder, then call `.call()` to execute the request.
+
+```java
+package hello.world;
+
+import co.novu.Novu;
+import co.novu.models.components.*;
+import co.novu.models.errors.*;
+import co.novu.models.operations.EventsControllerTriggerResponse;
+import java.util.Map;
+
+public class TriggerExample {
+
+    public static void main(String[] args) throws Exception {
+
+        Novu sdk = Novu.builder()
+                .secretKey(System.getenv("NOVU_SECRET_KEY"))
+                .build();
+
+        EventsControllerTriggerResponse res = sdk.trigger()
+                .body(TriggerEventRequestDto.builder()
+                    .workflowId("welcome-email")
+                    .to(To2.of("user_123"))
+                    .payload(Map.ofEntries(
+                        Map.entry("userName", "Alice"),
+                        Map.entry("actionUrl", "https://app.example.com/get-started")
+                    ))
+                    .build())
+                .call();
+
+        if (res.triggerEventResponseDto().isPresent()) {
+            System.out.println("Triggered: " + res.triggerEventResponseDto().get().getTransactionId());
+        }
+    }
+}
+```
+
+### Trigger with a Full Subscriber Object
+
+Pass a full subscriber payload to `to()` to create or update the subscriber inline at trigger time.
+
+```java
+EventsControllerTriggerResponse res = sdk.trigger()
+        .body(TriggerEventRequestDto.builder()
+            .workflowId("order-confirmation")
+            .to(To2.of(SubscriberPayloadDto.builder()
+                .subscriberId("user_123")
+                .firstName("Alice")
+                .lastName("Smith")
+                .email("alice@example.com")
+                .build()))
+            .payload(Map.ofEntries(
+                Map.entry("orderId", "ORD-9876"),
+                Map.entry("total", "$49.99")
+            ))
+            .build())
+        .call();
+```
+
+### Trigger with Context and Overrides
+
+Use `context` to set a tenant, and `overrides` for channel-specific customization.
+
+```java
+EventsControllerTriggerResponse res = sdk.trigger()
+        .body(TriggerEventRequestDto.builder()
+            .workflowId("invoice-notification")
+            .to(To2.of("user_123"))
+            .payload(Map.ofEntries(
+                Map.entry("invoiceId", "INV-001")
+            ))
+            .overrides(TriggerEventRequestDtoOverrides.builder().build())
+            .context(Map.ofEntries(
+                Map.entry("tenant", TriggerEventRequestDtoContextUnion.of("org-acme"))
+            ))
+            .build())
+        .call();
+```
+
+---
+
+## Create a Subscriber
+
+Register a subscriber in Novu before sending them notifications.
+
+```java
+import co.novu.Novu;
+import co.novu.models.components.*;
+
+public class CreateSubscriberExample {
+
+    public static void main(String[] args) throws Exception {
+
+        Novu sdk = Novu.builder()
+                .secretKey(System.getenv("NOVU_SECRET_KEY"))
+                .build();
+
+        var res = sdk.subscribers().create()
+                .body(CreateSubscriberRequestDto.builder()
+                    .subscriberId("user_123")
+                    .firstName("Alice")
+                    .lastName("Smith")
+                    .email("alice@example.com")
+                    .phone("+1234567890")
+                    .avatar("https://example.com/avatars/alice.png")
+                    .build())
+                .call();
+
+        System.out.println("Subscriber created: " + res);
+    }
+}
+```
+
+---
+
+## Update a Subscriber
+
+Update an existing subscriber's profile using their `subscriberId`.
+
+```java
+var res = sdk.subscribers().update()
+        .subscriberId("user_123")
+        .body(UpdateSubscriberRequestDto.builder()
+            .firstName("Alice")
+            .lastName("Johnson")
+            .email("alice.johnson@example.com")
+            .build())
+        .call();
+```
+
+---
+
+## Error Handling
+
+The SDK throws typed exceptions for validation and API errors. Catch them individually for granular error handling.
+
+```java
+import co.novu.models.errors.*;
+
+try {
+    EventsControllerTriggerResponse res = sdk.trigger()
+            .body(TriggerEventRequestDto.builder()
+                .workflowId("user-alert")
+                .to(To2.of("user_123"))
+                .payload(Map.ofEntries(
+                    Map.entry("message", "Something needs your attention.")
+                ))
+                .build())
+            .call();
+
+    if (res.triggerEventResponseDto().isPresent()) {
+        System.out.println("Success!");
+    }
+} catch (PayloadValidationExceptionDto e) {
+    System.err.println("Payload validation error: " + e.getMessage());
+} catch (ErrorDto e) {
+    System.err.println("API error: " + e.getMessage());
+} catch (ValidationErrorDto e) {
+    System.err.println("Validation error: " + e.getMessage());
+} catch (Exception e) {
+    System.err.println("Unexpected error: " + e.getMessage());
+}
+```

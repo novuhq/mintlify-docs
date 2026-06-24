@@ -1,0 +1,81 @@
+---
+title: "Monitor and Manage Agent Conversations"
+sidebarTitle: "Conversations"
+description: "View, inspect, and manage live agent conversations from the Novu Connect dashboard. Track message history, channel, and conversation state."
+---
+
+Novu provides full observability for agent conversations across both managed agents and custom code agents. Navigate to the **Activity Feed** page in the Novu dashboard and switch to the **Agent Conversations** tab to view all conversations for your agents.
+
+## Conversation lifecycle
+
+Every agent conversation follows the same state machine, regardless of agent type.
+
+| State | What it means |
+|-------|---------------|
+| **Active** | The conversation is ongoing. Messages increment the count, metadata can be updated, and the last activity timestamp is refreshed. |
+| **Resolved** | The conversation has been closed. For custom code agents, this happens when the handler calls `ctx.resolve()` and the `onResolve` handler fires. For managed agents, the platform resolves the conversation based on its reasoning. An optional summary is stored. |
+| **Reopened** | If a user sends a new message after the conversation was resolved, it automatically reopens and becomes active again. |
+
+## What the dashboard shows
+
+Navigate to your agent's detail page to see all conversations, their status, and a complete timeline of activity.
+
+### Conversation list
+
+The conversation list shows all conversations for the agent with:
+
+- Status (`active` or `resolved`)
+- Last message preview
+- Message count
+- Last activity timestamp
+
+### Full message history
+
+Every message exchanged between the user and the agent is visible, including rich content such as cards, markdown, and files.
+
+### Metadata
+
+Key-value pairs stored on the conversation. In custom code agents, these are set via `ctx.metadata.set()`. In managed agents, the platform may store internal state.
+
+### Signal activity
+
+A log of signals fired during the conversation — metadata changes, workflow triggers, and resolve events. This applies to custom code agents that use signals.
+
+### Tool use activity
+
+For managed agents, the dashboard shows which tools the agent called during each turn, including built-in tools (bash, web search, grep) and MCP servers.
+
+### Participant details
+
+Which subscribers and platform users are part of each conversation, including identity resolution status. Novu maps platform users to known subscribers when possible; unknown users are tracked as platform users until resolved.
+
+### Platform context
+
+Which provider and thread the conversation is happening on — Slack channel, Teams chat, WhatsApp thread, and so on.
+
+## Supported platforms
+
+Both managed agents and custom code agents support the same set of chat providers:
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Slack | Available | Text, markdown, files, interactive cards, reactions, typing indicators. File uploads require the `files:write` bot scope. |
+| Microsoft Teams | Available | Text, markdown, files, and cards via Bot Framework. Dashboard includes a guided onboarding flow with one-click app package download. |
+| WhatsApp | Available | Text, markdown, interactive buttons. Inbound media is surfaced via attachments; outbound file attachments are not yet supported. |
+| Email | Available | Text, markdown, files, interactive cards, emoji reactions (Gmail only). |
+| Telegram | Available | Text, markdown, files, reactions, typing indicators. |
+
+<Info>
+  Platform capabilities vary. Typing indicators are only shown on platforms that support them, and message editing depends on platform adapter support.
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Managed Agent" icon="sparkles" href="/agents/managed-agent">
+    Configure a Claude-powered agent with system prompts, skills, and MCP servers.
+  </Card>
+  <Card title="Custom Code Agent" icon="code" href="/agents/custom-code-agent">
+    Build a custom agent with full control over handler logic and replies.
+  </Card>
+</CardGroup>

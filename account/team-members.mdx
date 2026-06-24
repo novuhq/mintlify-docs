@@ -1,0 +1,135 @@
+---
+title: "Manage Team Members and Roles in Novu"
+sidebarTitle: "Team Members"
+description: "Invite team members to your Novu organization and assign roles to control their access to workflows, integrations, and settings."
+---
+
+Novu's team management lets you give colleagues access to your organization's dashboard while controlling exactly what they can see and do. Invite engineers, content authors, and administrators with the appropriate role for their responsibilities — then adjust permissions at any time as your team evolves.
+
+<Note>
+Only members with the **Owner** role can invite or manage other members.
+</Note>
+
+## Inviting a Team Member
+
+<Steps>
+  <Step title="Open Team Settings">
+    In the [Novu dashboard](https://dashboard.novu.co), go to **Settings** → **Team**.
+  </Step>
+  <Step title="Click Invite">
+    Click the **Invite** button. This is available from the **Members**, **Invitations**, or **Requests** tab.
+  </Step>
+  <Step title="Enter the member's email">
+    Type the invitee's email address into the email field.
+  </Step>
+  <Step title="Assign a role">
+    Select a role from the dropdown. If you skip this step, the member is assigned the **Viewer** role by default.
+  </Step>
+  <Step title="Send the invitation">
+    Click **Send invitation**. The invitee receives an email with a link to join your organization.
+  </Step>
+</Steps>
+
+Pending invitations appear under the **Invitations** tab. Once the invitee accepts, they move automatically to the **Members** tab.
+
+## Available Roles
+
+Novu uses a four-tier role-based access control (RBAC) model. Assign the role that matches each member's responsibilities:
+
+| Role | Who it's for |
+|------|-------------|
+| **Owner** | Primary account administrator. Full access to all settings, billing, API keys, environments, and user management. Every organization must have at least one Owner. |
+| **Admin** | Operations and configuration. Can manage workflows, integrations, subscribers, environments, and logs. Cannot access billing. |
+| **Author** | Workflow designers and content authors. Can create and edit workflows, manage topics, and trigger events. Cannot access organization settings, billing, or team management. |
+| **Viewer** | Read-only access. Can view workflows, logs, environments, and messages but cannot create, edit, or delete anything. |
+
+## Roles and Permissions Reference
+
+Legend: 📖 Read-only · ✏️ Full access (read, write, delete) · ❌ No access
+
+| Permission | Viewer | Author | Admin | Owner |
+|-----------|--------|--------|-------|-------|
+| Create and manage environments | ❌ | ❌ | ✏️ | ✏️ |
+| Create and manage messages | 📖 | ✏️ | ✏️ | ✏️ |
+| Create and manage topics | 📖 | ✏️ | ✏️ | ✏️ |
+| Create and manage webhooks | 📖 | 📖 | ✏️ | ✏️ |
+| Create and manage workflows | 📖 | ✏️ | ✏️ | ✏️ |
+| Manage API keys | ❌ | ❌ | ✏️ | ✏️ |
+| Manage billing | ❌ | ❌ | ❌ | ✏️ |
+| Manage integrations | 📖 | 📖 | ✏️ | ✏️ |
+| Manage subscribers | 📖 | ✏️ | ✏️ | ✏️ |
+| Trigger events | ❌ | ✏️ | ✏️ | ✏️ |
+| View and manage team members | 📖 | 📖 | 📖 | ✏️ |
+| Environment Variables | 📖 | ✏️ | ✏️ | ✏️ |
+
+<Note>
+Role-based access control is available on **Team and Enterprise plans**. See [novu.co/pricing](https://novu.co/pricing) for details.
+</Note>
+
+## Updating a Member's Role
+
+<Steps>
+  <Step title="Open Team Settings">
+    Go to **Settings** → **Team** and click the **Members** tab.
+  </Step>
+  <Step title="Find the member">
+    Locate the member whose role you want to change.
+  </Step>
+  <Step title="Change the role">
+    Click the role dropdown in the **Role** column next to their name and select a new role. The change takes effect immediately.
+  </Step>
+</Steps>
+
+<Warning>
+The last Owner of an organization cannot have their role changed. Every organization must always have at least one Owner.
+</Warning>
+
+## Revoking a Pending Invitation
+
+If an invitation hasn't been accepted yet, you can cancel it:
+
+<Steps>
+  <Step title="Open the Invitations tab">
+    Go to **Settings** → **Team** → **Invitations**.
+  </Step>
+  <Step title="Revoke the invitation">
+    Click the **⋯** menu in the **Actions** column next to the pending invitee and select **Revoke invitation**. The link is invalidated immediately.
+  </Step>
+</Steps>
+
+You can send a new invitation to the same email address after revoking the previous one.
+
+## Managing Domain-Based Join Requests
+
+Simplify onboarding by allowing anyone with your company's email domain to request to join or join automatically.
+
+<Steps>
+  <Step title="Open Organization Settings">
+    Go to **Settings** → **Organization** and scroll to the **Verified Domains** section.
+  </Step>
+  <Step title="Add your domain">
+    Click **Add Domain**, enter your email domain (e.g., `yourcompany.com`), and click **Save**.
+  </Step>
+  <Step title="Review join requests">
+    Once a domain is verified, new sign-ups using that domain can request to join. Review pending requests under **Settings** → **Team** → **Requests**. Approve or decline each one individually.
+  </Step>
+</Steps>
+
+<Note>
+Public email domains (e.g., `gmail.com`) cannot be verified. You must also have at least one existing Owner from the domain before it can be verified. Approved requesters are assigned the **Viewer** role by default.
+</Note>
+
+## Removing a Member
+
+<Steps>
+  <Step title="Open Team Settings">
+    Go to **Settings** → **Team** → **Members**.
+  </Step>
+  <Step title="Remove the member">
+    Click the **⋯** menu next to the member's name and select **Remove member**. Their access is revoked immediately and they are signed out of your organization.
+  </Step>
+</Steps>
+
+<Warning>
+The organization creator cannot be removed. Removal is immediate and permanent — the member must be re-invited if you need to restore their access later.
+</Warning>

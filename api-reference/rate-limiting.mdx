@@ -1,0 +1,109 @@
+---
+title: "Novu API Rate Limits and Usage Quotas"
+sidebarTitle: "Rate Limits"
+description: "Learn about Novu API rate limits by plan tier, how to handle 429 responses, and strategies for staying within quota during high-volume operations."
+---
+
+Novu uses a variable-cost token bucket rate limiting algorithm. Different API categories and methods consume different numbers of request tokens, giving you predictable limits while protecting shared infrastructure from overload.
+
+## Rate limits by plan and category
+
+Each category has an independent bucket of request tokens that refills per second. The limits below show requests per second (RPS) for each plan tier:
+
+| Category | Free | Pro | Team | Enterprise | Endpoints |
+|----------|------|-----|------|------------|-----------|
+| **Events** | 60 RPS | 240 RPS | 600 RPS | 6,000 RPS | Trigger |
+| **Configuration** | 20 RPS | 80 RPS | 200 RPS | 2,000 RPS | Subscribers, Topics, Channel Connections, Workflows |
+| **Global** | 30 RPS | 120 RPS | 300 RPS | 3,000 RPS | All other endpoints |
+
+### Token cost per request
+
+Not all requests cost the same:
+
+- **Standard requests** — `POST /v1/events/trigger`, `POST /v2/subscribers/` — cost **1 request token**.
+- **Bulk requests** — `POST /v1/events/trigger/bulk`, `POST /v1/subscribers/bulk` — cost **100 request tokens**.
+
+**Example:** On the Team plan, the Events category provides 600 request tokens per second. A single trigger request costs 1 token, so you can call `POST /v1/events/trigger` up to **600 times per second**. A bulk trigger request costs 100 tokens, so you can call `POST /v1/events/trigger/bulk` up to **6 times per second**.
+
+## HTTP response headers
+
+Every API response includes rate limit headers so you can monitor your usage:
+
+```
+RateLimit-Remaining: 219
+RateLimit-Limit: 300
+RateLimit-Reset: 2
+RateLimit-Policy: 300;w=5;burst=330;comment="token bucket";category="trigger";cost="bulk";serviceLevel="free"
+```
+
+| Header | Description |
+|--------|-------------|
+| `RateLimit-Remaining` | Remaining request tokens in the current window. |
+| `RateLimit-Limit` | Total request tokens available in the current window. |
+| `RateLimit-Reset` | Seconds until the current window resets and tokens are fully replenished. |
+| `RateLimit-Policy` | Details of the applied rate limiting policy. |
+| `Retry-After` | Seconds to wait before retrying (only present on 429 responses). |
+
+## Handling 429 responses
+
+When you exceed your rate limit, Novu returns a `429 Too Many Requests` response. Handle it by:
+
+1. Reading the `Retry-After` header to determine how long to wait.
+2. Pausing the request and retrying after the specified delay.
+3. Implementing exponential backoff for sustained high-volume traffic.
+
+<CodeGroup>
+```javascript JavaScript
+async function triggerWithRetry(novu, payload, maxRetries = 3) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await novu.events.trigger(payload);
+    } catch (error) {
+      if (error.statusCode === 429 && attempt < maxRetries - 1) {
+        const retryAfter = parseInt(error.headers?.['retry-after'] ?? '1', 10);
+        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+```
+
+```python Python
+import time
+import requests
+
+def trigger_with_retry(url, headers, payload, max_retries=3):
+    for attempt in range(max_retries):
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 429 and attempt < max_retries - 1:
+            retry_after = int(response.headers.get("Retry-After", 1))
+            time.sleep(retry_after)
+            continue
+        response.raise_for_status()
+        return response.json()
+```
+</CodeGroup>
+
+## Strategies for high-volume operations
+
+<Tip>
+  Use bulk endpoints to reduce the number of API calls for high-volume operations. A single bulk trigger request sends up to 100 events while consuming only 100 tokens instead of 100 separate requests.
+</Tip>
+
+- **Use bulk APIs** — `POST /v1/events/trigger/bulk` (up to 100 events) and `POST /v1/subscribers/bulk` (up to 500 subscribers) reduce API call volume.
+- **Batch subscriber imports** — When syncing large user databases, use the bulk subscriber endpoint to stay within the Configuration category limits.
+- **Monitor `RateLimit-Remaining`** — Proactively slow down requests as the remaining token count approaches zero rather than waiting for a 429.
+- **Upgrade your plan** — Higher plans provide proportionally more tokens per second for sustained high-throughput workloads.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Bulk Trigger" icon="layer-group" href="/api-reference/bulk-trigger">
+    Trigger up to 100 notifications in a single API call.
+  </Card>
+  <Card title="Idempotency" icon="rotate" href="/api-reference/idempotency">
+    Safely retry failed requests without causing duplicate notifications.
+  </Card>
+</CardGroup>

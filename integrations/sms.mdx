@@ -1,0 +1,175 @@
+---
+title: "SMS Integrations: Send Text Message Notifications"
+sidebarTitle: "SMS"
+description: "Connect Twilio, Amazon SNS, Vonage, Plivo, and other SMS providers to Novu to send text message notifications to your subscribers."
+---
+
+The SMS channel sends text messages directly to your subscribers' mobile devices. Novu connects to your preferred SMS provider through the Integration Store, then handles routing and delivery automatically when your workflows trigger — no changes to your application code required.
+
+## How SMS Delivery Works in Novu
+
+<Steps>
+  <Step title="Add an SMS provider in the Integration Store">
+    Open the [Integration Store](https://dashboard.novu.co/integrations) in the Novu dashboard and connect one or more SMS providers. Each becomes an independent integration you can manage, activate, or disable.
+  </Step>
+  <Step title="Add an SMS step to your workflow">
+    In the workflow editor, add an **SMS** step. This step defines when and how the message is sent within your notification flow.
+  </Step>
+  <Step title="Write the message content">
+    Compose the SMS body in the step editor. Use dynamic variables from the trigger payload to personalize each message (e.g., `{{payload.orderId}}`).
+  </Step>
+  <Step title="Store subscriber phone numbers">
+    Novu delivers each SMS to the phone number on the subscriber's profile. Set or update phone numbers using the Novu dashboard or the [Subscribers API](https://docs.novu.co/api-reference/subscribers/update-subscriber). Phone numbers must be in E.164 format (e.g., `+14155551234`).
+  </Step>
+  <Step title="Trigger the workflow">
+    Call the [Trigger Event API](https://docs.novu.co/api-reference/events/trigger-event) from your server. Novu resolves the subscriber, selects the correct SMS provider, and delivers the message.
+  </Step>
+</Steps>
+
+<Note>
+Some countries restrict the use of named sender IDs (alphanumeric "From" names). Check your provider's documentation and the requirements for each destination country before configuring a sender name.
+</Note>
+
+## Configuring SMS Providers
+
+When you add an SMS integration, you configure:
+
+- **From field** — The sender ID or phone number displayed to the recipient. Required for all SMS providers. You can override this per trigger.
+- **Provider credentials** — Authentication details unique to the provider, such as Account SID, Auth Token, API key, username, or password.
+
+## Connecting Twilio (Step-by-Step Example)
+
+Twilio is the most widely used SMS provider. Here's how to connect it to Novu.
+
+### 1. Set Up a Twilio Account
+
+<Steps>
+  <Step title="Create a Twilio account">
+    Go to [twilio.com](https://www.twilio.com) and sign up. Verify your email address and phone number to activate the account.
+  </Step>
+  <Step title="Get a Twilio phone number">
+    From the Twilio Console, click **Get a Twilio phone number** to receive a provisioned number. New accounts receive a free trial number you can use immediately.
+  </Step>
+  <Step title="Locate your credentials">
+    In the [Twilio Console](https://console.twilio.com), find the **Account Info** section to copy your **Account SID** and **Auth Token**.
+  </Step>
+</Steps>
+
+### 2. Connect Twilio to Novu
+
+<Steps>
+  <Step title="Open the Integration Store">
+    In the [Novu dashboard](https://dashboard.novu.co/integrations), click **Add a Provider**.
+  </Step>
+  <Step title="Select Twilio">
+    Browse or search for **Twilio** in the provider list and click **Connect**.
+  </Step>
+  <Step title="Enter your Twilio credentials">
+    Fill in your:
+    - **Account SID**
+    - **Auth Token**
+    - **Twilio Phone Number** (in E.164 format, e.g., `+15005550006`)
+  </Step>
+  <Step title="Activate and save">
+    Toggle the integration to **Active** and click **Save**. Novu is now ready to send SMS via Twilio.
+  </Step>
+</Steps>
+
+## Primary Integration
+
+For SMS, only one integration can be marked as **primary** at a time. The primary integration handles all SMS notifications unless you explicitly target a different integration using the `integrationIdentifier` override.
+
+If you disable the current primary, Novu automatically promotes another active SMS integration to primary.
+
+## Overriding SMS Settings at Runtime
+
+Use the `overrides.sms` object to change the recipient, sender, or message content for a single trigger:
+
+```javascript
+await novu.trigger({
+  workflowId: "order-shipped",
+  to: { subscriberId: "subscriber_123" },
+  overrides: {
+    sms: {
+      to: "+14155551234",
+      from: "ShopCo",
+      content: "Your order has shipped! Track it at https://track.example.com",
+    },
+  },
+});
+```
+
+## Targeting a Specific Integration
+
+Force a specific active SMS integration by passing its `integrationIdentifier`:
+
+```javascript
+await novu.trigger({
+  workflowId: "security-alert",
+  to: { subscriberId: "subscriber_123" },
+  overrides: {
+    sms: {
+      integrationIdentifier: "twilio-security",
+    },
+  },
+});
+```
+
+Find the `integrationIdentifier` on the integration's settings page in the Integration Store.
+
+## Supported Providers
+
+<CardGroup cols={2}>
+  <Card title="Twilio" icon="phone">
+    Industry-leading SMS API with global reach and WhatsApp support.
+  </Card>
+  <Card title="AWS SNS" icon="aws">
+    Scalable SMS delivery through Amazon Simple Notification Service.
+  </Card>
+  <Card title="Vonage (Nexmo)" icon="v">
+    Global SMS platform with high deliverability and two-way messaging.
+  </Card>
+  <Card title="Plivo" icon="mobile">
+    Developer-friendly SMS API with competitive international pricing.
+  </Card>
+  <Card title="MessageBird" icon="bird">
+    Cloud communications platform with omni-channel messaging.
+  </Card>
+  <Card title="Infobip" icon="circle-info">
+    Enterprise communications platform with global carrier connections.
+  </Card>
+  <Card title="Azure SMS" icon="microsoft">
+    SMS delivery through Microsoft Azure Communication Services.
+  </Card>
+  <Card title="Telnyx" icon="network-wired">
+    Carrier-grade SMS with real-time delivery and analytics.
+  </Card>
+  <Card title="Africa's Talking" icon="globe-africa">
+    SMS and voice API optimized for African mobile networks.
+  </Card>
+  <Card title="BulkSMS" icon="comment-dots">
+    High-volume SMS sending with direct carrier connections.
+  </Card>
+  <Card title="Clickatell" icon="arrows-left-right-to-line">
+    Multi-channel messaging with coverage in 220+ countries.
+  </Card>
+  <Card title="Clicksend" icon="paper-plane">
+    Cloud SMS with dashboard, API, and email-to-SMS capabilities.
+  </Card>
+  <Card title="Gupshup" icon="message">
+    Conversational messaging platform for SMS and WhatsApp.
+  </Card>
+  <Card title="Termii" icon="mobile-screen">
+    African-focused messaging API with SMS and voice channels.
+  </Card>
+  <Card title="46elks" icon="phone-volume">
+    Nordic SMS API with transparent pricing and REST interface.
+  </Card>
+  <Card title="SimpleTexting" icon="mobile-button">
+    SMS marketing and messaging platform for businesses.
+  </Card>
+</CardGroup>
+
+<Tip>
+Novu also supports Firetext, Kannel, Kudosity, Sendchamp, SMS Central, SMS77, and others. Open the Integration Store to see the complete list.
+</Tip>

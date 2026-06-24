@@ -1,0 +1,252 @@
+---
+title: "Triggering Novu Workflows via API"
+sidebarTitle: "Triggers"
+description: "Send a notification by triggering a Novu workflow with the REST API or SDK. Pass a workflowId, subscriberId, and optional payload."
+---
+
+Triggering a workflow starts the execution of a notification pipeline in Novu. When you trigger a workflow, Novu resolves the target subscribers, evaluates workflow logic, and executes each configured step to deliver notifications across the selected channels.
+
+At minimum, triggering a workflow requires a **workflow identifier** (`workflowId`) and a **subscriber identifier** (`subscriberId`). You can also include a payload with custom data to personalize notification content.
+
+<Tip>
+  Before triggering a workflow from your application, test it directly in the Workflow Editor from the [Novu Dashboard](https://dashboard.novu.co). This lets you validate step configuration and preview notification content for a specific subscriber.
+</Tip>
+
+## Trigger a Workflow
+
+Send a `POST` request to the Trigger Event API with your workflow identifier, subscriber, and any payload data:
+
+<CodeGroup>
+  ```bash cURL
+  curl --request POST \
+    --url https://api.novu.co/v1/events/trigger \
+    --header 'Authorization: ApiKey <YOUR_SECRET_KEY>' \
+    --header 'Content-Type: application/json' \
+    --data '{
+      "workflowId": "workflow_identifier",
+      "to": {
+        "subscriberId": "subscriber_id"
+      },
+      "payload": {
+        "message": "Hello from Novu!"
+      }
+    }'
+  ```
+
+  ```typescript Node.js
+  import { Novu } from "@novu/api";
+
+  const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+  await novu.trigger({
+    workflowId: "workflow_identifier",
+    to: [{ subscriberId: "string" }],
+  });
+  ```
+</CodeGroup>
+
+Once the event is received, Novu executes the workflow, evaluates step conditions, resolves variables, and delivers notifications across the configured channels.
+
+<Note>
+  Your **secret key** is available in the [Novu Dashboard](https://dashboard.novu.co) under **Settings → API Keys**. Never expose your secret key in client-side code.
+</Note>
+
+## Trigger with Payload Data
+
+Include a `payload` object to pass custom data to the workflow. Payload values are available in channel step templates via LiquidJS syntax (e.g., `{{ payload.message }}`).
+
+<CodeGroup>
+  ```bash cURL
+  curl --request POST \
+    --url https://api.novu.co/v1/events/trigger \
+    --header 'Authorization: ApiKey <YOUR_SECRET_KEY>' \
+    --header 'Content-Type: application/json' \
+    --data '{
+      "workflowId": "order-confirmation",
+      "to": {
+        "subscriberId": "user_123"
+      },
+      "payload": {
+        "orderId": "ORD-9876",
+        "customerName": "Jane Doe",
+        "totalAmount": "59.99"
+      }
+    }'
+  ```
+
+  ```typescript Node.js
+  import { Novu } from "@novu/api";
+
+  const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+  await novu.trigger({
+    workflowId: "order-confirmation",
+    to: [{ subscriberId: "user_123" }],
+    payload: {
+      orderId: "ORD-9876",
+      customerName: "Jane Doe",
+      totalAmount: "59.99",
+    },
+  });
+  ```
+</CodeGroup>
+
+## Trigger with Context Data
+
+Attach context data when triggering a workflow using the `context` object. Context can reference an existing context created in the Novu dashboard, or be defined inline. Context data is available to all downstream steps during execution.
+
+<CodeGroup>
+  ```bash cURL
+  curl --request POST \
+    --url https://api.novu.co/v1/events/trigger \
+    --header 'Authorization: ApiKey <YOUR_SECRET_KEY>' \
+    --header 'Content-Type: application/json' \
+    --data '{
+      "workflowId": "workflow_identifier",
+      "to": [{ "subscriberId": "string" }],
+      "context": {
+        "context_type": "context_identifier",
+        "region": "us-east-1",
+        "app": "dashboard"
+      }
+    }'
+  ```
+
+  ```typescript Node.js
+  import { Novu } from "@novu/api";
+
+  const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+  await novu.trigger({
+    workflowId: "workflow_identifier",
+    to: [{ subscriberId: "string" }],
+    context: {
+      context_type: "context_identifier",
+      region: "us-east-1",
+      app: "dashboard",
+    },
+  });
+  ```
+</CodeGroup>
+
+## Trigger to a Topic
+
+Topics let you broadcast notifications to a group of subscribers with a single API call. When you trigger a workflow to a topic, Novu performs a fan-out — resolving all subscribers in the topic and executing the workflow independently for each one.
+
+### Single Topic
+
+<CodeGroup>
+  ```bash cURL
+  curl --request POST \
+    --url https://api.novu.co/v1/events/trigger \
+    --header 'Authorization: ApiKey <YOUR_SECRET_KEY>' \
+    --header 'Content-Type: application/json' \
+    --data '{
+      "workflowId": "workflow_identifier",
+      "to": {
+        "type": "Topic",
+        "topicKey": "my-topic-key"
+      }
+    }'
+  ```
+
+  ```typescript Node.js
+  import { Novu } from "@novu/api";
+
+  const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+  await novu.trigger({
+    workflowId: "workflow_identifier",
+    to: { type: "Topic", topicKey: "my-topic-key" },
+  });
+  ```
+</CodeGroup>
+
+### Multiple Topics
+
+<CodeGroup>
+  ```bash cURL
+  curl --request POST \
+    --url https://api.novu.co/v1/events/trigger \
+    --header 'Authorization: ApiKey <YOUR_SECRET_KEY>' \
+    --header 'Content-Type: application/json' \
+    --data '{
+      "workflowId": "workflow_identifier",
+      "to": [
+        { "type": "Topic", "topicKey": "paying-customers" },
+        { "type": "Topic", "topicKey": "beta-testers" }
+      ]
+    }'
+  ```
+
+  ```typescript Node.js
+  import { Novu } from "@novu/api";
+
+  const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+  await novu.trigger({
+    workflowId: "workflow_identifier",
+    to: [
+      { type: "Topic", topicKey: "paying-customers" },
+      { type: "Topic", topicKey: "beta-testers" },
+    ],
+  });
+  ```
+</CodeGroup>
+
+<Note>
+  Novu automatically de-duplicates subscribers. If a subscriber belongs to more than one of the specified topics, they receive the notification only once.
+</Note>
+
+### Exclude a Subscriber from a Topic Trigger
+
+Use the `exclude` field to prevent specific subscribers from receiving the notification for a given trigger. This exclusion applies only to the current request and does not modify topic membership.
+
+<CodeGroup>
+  ```bash cURL
+  curl --request POST \
+    --url https://api.novu.co/v1/events/trigger \
+    --header 'Authorization: ApiKey <YOUR_SECRET_KEY>' \
+    --header 'Content-Type: application/json' \
+    --data '{
+      "workflowId": "workflow_identifier",
+      "to": [{
+        "type": "Topic",
+        "topicKey": "my-topic-key",
+        "exclude": ["subscriber-id-to-skip"]
+      }]
+    }'
+  ```
+
+  ```typescript Node.js
+  import { Novu } from "@novu/api";
+
+  const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+  await novu.trigger({
+    workflowId: "workflow_identifier",
+    to: [{ type: "Topic", topicKey: "my-topic-key", exclude: ["subscriber-id-to-skip"] }],
+  });
+  ```
+</CodeGroup>
+
+## Trigger API Reference
+
+For the full request schema, response format, and error codes, see the [Trigger Event API reference](https://docs.novu.co/api-reference/events/trigger-event).
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create a Workflow" icon="diagram-project" href="/workflows/create">
+    Build a workflow in the Novu dashboard before triggering it from your app.
+  </Card>
+  <Card title="Workflow Steps" icon="list" href="/workflows/steps">
+    Learn about the channel and action step types available in a workflow.
+  </Card>
+  <Card title="Digest Step" icon="layer-group" href="/workflows/digest">
+    Batch multiple trigger events into a single notification.
+  </Card>
+  <Card title="Workflow Preferences" icon="sliders" href="/workflows/preferences">
+    Configure default channel preferences for triggered workflows.
+  </Card>
+</CardGroup>

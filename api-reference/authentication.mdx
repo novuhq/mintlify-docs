@@ -1,0 +1,106 @@
+---
+title: "Authenticate Requests to the Novu API"
+sidebarTitle: "Authentication"
+description: "All Novu API requests require an API key in the Authorization header. Find your secret key in the Novu dashboard under API Keys."
+---
+
+Every request to the Novu REST API must include an API key for authentication. Novu uses a simple `ApiKey` scheme: pass your secret key in the `Authorization` header and Novu validates it against your organization on every request.
+
+## Header format
+
+Include the following header in all API requests:
+
+```
+Authorization: ApiKey YOUR_SECRET_KEY
+```
+
+The prefix `ApiKey ` (with a trailing space) is required. Omitting it or using a different prefix returns a `401 Unauthorized` response.
+
+## Find your secret key
+
+Your secret key is available in the **API Keys** section of the [Novu dashboard](https://dashboard.novu.co). Each Novu environment (development, production) has its own secret key.
+
+## Code examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.novu.co/v1/events/trigger" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "name": "welcome-email",
+    "to": { "subscriberId": "user-123" },
+    "payload": {}
+  }'
+```
+
+```javascript JavaScript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({
+  secretKey: process.env.NOVU_SECRET_KEY,
+});
+
+await novu.events.trigger({
+  workflowId: 'welcome-email',
+  to: { subscriberId: 'user-123' },
+  payload: {},
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v1/events/trigger"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "name": "welcome-email",
+    "to": {"subscriberId": "user-123"},
+    "payload": {},
+}
+
+response = requests.post(url, headers=headers, json=payload)
+```
+</CodeGroup>
+
+## Security best practices
+
+<Warning>
+  Never hardcode your secret key in source code or commit it to version control. Always load it from an environment variable or secrets manager.
+</Warning>
+
+- **Use environment variables** — Store your key in `NOVU_SECRET_KEY` (or equivalent) and read it at runtime.
+- **Server-side only** — Never expose your secret key in client-side code (browser JavaScript, mobile apps). It grants full access to your Novu organization.
+- **Rotate keys when compromised** — Generate a new key in the dashboard and update your environment variables immediately.
+- **Use separate keys per environment** — Your development and production environments each have their own keys. Do not reuse keys across environments.
+
+## Application identifier vs. secret key
+
+Novu uses two different identifiers depending on the context:
+
+| Identifier | Where it's used | Safe to expose? |
+|------------|-----------------|-----------------|
+| **Secret key** (`ApiKey …`) | Server-side REST API requests | No — keep private |
+| **Application identifier** | Client-side Novu Inbox SDK (`@novu/js`) | Yes — public identifier only |
+
+Use the secret key only in your backend. Use the application identifier when initializing the Novu Inbox component in your frontend.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Trigger Event" icon="bolt" href="/api-reference/trigger-event">
+    Send your first notification with the trigger API.
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api-reference/rate-limiting">
+    Understand per-plan rate limits and how to handle 429 responses.
+  </Card>
+  <Card title="Idempotency" icon="rotate" href="/api-reference/idempotency">
+    Prevent duplicate notifications when retrying requests.
+  </Card>
+  <Card title="API Overview" icon="map" href="/api-reference/overview">
+    Browse all available endpoints and base URLs.
+  </Card>
+</CardGroup>

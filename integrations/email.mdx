@@ -1,0 +1,232 @@
+---
+title: "Email Integrations: Connect Your Email Provider"
+sidebarTitle: "Email"
+description: "Configure email delivery in Novu. Connect SendGrid, Amazon SES, Mailgun, Postmark, Resend, and other email providers through the Integration Store."
+---
+
+The Email channel delivers notifications to your subscribers' inboxes through the email provider of your choice. Novu's unified integration layer routes each message through your configured provider automatically — you define the workflow once and let Novu handle delivery, provider selection, and fallback logic.
+
+## How Email Works in Novu
+
+<Steps>
+  <Step title="Add an email provider in the Integration Store">
+    Open the [Integration Store](https://dashboard.novu.co/integrations) in the Novu dashboard and connect one or more email providers. Each connected provider becomes an integration you can manage independently.
+  </Step>
+  <Step title="Add an Email step to your workflow">
+    In the workflow editor, add an **Email** step. This step defines when and how the email is sent within your notification flow.
+  </Step>
+  <Step title="Design the email content">
+    Use the built-in visual block editor or the HTML code editor to compose your message. Reference subscriber data and trigger payload fields using dynamic variables (e.g., `{{subscriber.firstName}}`).
+  </Step>
+  <Step title="Ensure subscribers have email addresses">
+    Novu sends each email to the address stored on the subscriber's profile. Update subscriber profiles using the Novu dashboard or the [Subscribers API](https://docs.novu.co/api-reference/subscribers/update-subscriber).
+  </Step>
+  <Step title="Trigger the workflow">
+    Call the [Trigger Event API](https://docs.novu.co/api-reference/events/trigger-event) from your server. Novu resolves the subscriber, selects the correct provider, renders the template, and delivers the message.
+  </Step>
+</Steps>
+
+## Configuring an Email Provider
+
+When you add an email integration in the Integration Store, every provider requires two default sender settings:
+
+- **Sender name** — The name shown in the recipient's "From" field.
+- **From email address** — The address the email is sent from.
+
+<Warning>
+Most email providers require you to authenticate your "From" address before you can send at scale. Complete sender verification in your provider's dashboard before activating the integration in Novu.
+</Warning>
+
+Each provider also has its own authentication credentials (API keys, SMTP credentials, etc.). See the provider-specific guides linked in the [Supported Providers](#supported-providers) section below.
+
+## Connecting SendGrid (Step-by-Step Example)
+
+SendGrid is one of the most popular email providers. Here's how to connect it to Novu.
+
+### 1. Generate a SendGrid API Key
+
+<Steps>
+  <Step title="Log in to SendGrid">
+    Go to [sendgrid.com](https://sendgrid.com) and sign in to your account.
+  </Step>
+  <Step title="Create an API key">
+    Navigate to **Settings** → **API Keys** and click **Create API Key**.
+  </Step>
+  <Step title="Set permissions">
+    Give the key a descriptive name. Under permissions, grant:
+    - **Mail Send** — Full Access
+    - **Template Engine** — Read Only (optional, required for SendGrid templates)
+  </Step>
+  <Step title="Copy the key">
+    Click **Create & View** and copy the key immediately — SendGrid displays it only once.
+  </Step>
+</Steps>
+
+### 2. Authenticate Your Sender Identity
+
+Before sending at scale, authenticate your sender identity in SendGrid using either:
+- [Single Sender Verification](https://docs.sendgrid.com/ui/sending-email/sender-verification) — fastest option for a single address.
+- [Domain Authentication](https://docs.sendgrid.com/ui/account-and-settings/how-to-set-up-domain-authentication) — recommended for sending from multiple addresses under your domain.
+
+### 3. Connect SendGrid to Novu
+
+<Steps>
+  <Step title="Open the Integration Store">
+    In the [Novu dashboard](https://dashboard.novu.co/integrations), click **Add a Provider**.
+  </Step>
+  <Step title="Select SendGrid">
+    Choose **SendGrid** from the provider list.
+  </Step>
+  <Step title="Enter your credentials">
+    Paste your SendGrid API key, your authenticated From email address, and your sender name.
+  </Step>
+  <Step title="Activate and save">
+    Toggle the integration to **Active** and click **Update**. Novu is now ready to send emails via SendGrid.
+  </Step>
+</Steps>
+
+## Primary Integration
+
+For email, only one integration can be marked as **primary** at a time. The primary integration is used for all email notifications unless you specify a different integration using the `integrationIdentifier` override.
+
+To change which integration is primary, open the Integration Store, find the integration you want to promote, and select **Set as Primary**.
+
+## Advanced Email Features
+
+### Sending Attachments
+
+Pass an `attachments` array in the trigger `payload` to include files. Each attachment can be a binary buffer or a Base64-encoded string. The total size limit for all attachments is **20 MB**.
+
+```javascript
+await novu.trigger({
+  workflowId: "order-confirmation",
+  to: { subscriberId: "subscriber_123" },
+  payload: {
+    attachments: [
+      {
+        file: fs.readFileSync("./invoice.pdf"),
+        name: "invoice.pdf",
+        mime: "application/pdf",
+      },
+    ],
+  },
+});
+```
+
+### Overriding Email Settings at Runtime
+
+Use the `overrides.email` object to change sender, recipients, or other fields for a single trigger without modifying the workflow.
+
+```javascript
+await novu.trigger({
+  workflowId: "order-confirmation",
+  to: { subscriberId: "subscriber_123" },
+  overrides: {
+    email: {
+      to: ["custom@example.com"],
+      from: "noreply@yourcompany.com",
+      senderName: "Your Company",
+      replyTo: "support@yourcompany.com",
+      cc: ["manager@yourcompany.com"],
+      bcc: ["archive@yourcompany.com"],
+    },
+  },
+});
+```
+
+### Targeting a Specific Integration
+
+If you have multiple active email integrations, force a specific one by passing its `integrationIdentifier`:
+
+```javascript
+await novu.trigger({
+  workflowId: "marketing-blast",
+  to: { subscriberId: "subscriber_123" },
+  overrides: {
+    email: {
+      integrationIdentifier: "sendgrid-marketing",
+    },
+  },
+});
+```
+
+Find the `integrationIdentifier` on the integration's settings page in the Integration Store.
+
+### Passing Provider-Specific Fields
+
+Use `overrides.providers.<providerId>._passthrough` to send fields directly to the provider SDK that Novu doesn't expose natively:
+
+```javascript
+await novu.trigger({
+  workflowId: "transactional",
+  to: { subscriberId: "subscriber_123" },
+  overrides: {
+    providers: {
+      resend: {
+        _passthrough: {
+          body: {
+            tags: [{ name: "category", value: "transactional" }],
+          },
+        },
+      },
+    },
+  },
+});
+```
+
+## Supported Providers
+
+<CardGroup cols={2}>
+  <Card title="SendGrid" icon="paper-plane">
+    Full-featured transactional and marketing email with template support.
+  </Card>
+  <Card title="Amazon SES" icon="aws">
+    Scalable, cost-effective email sending via AWS infrastructure.
+  </Card>
+  <Card title="Mailgun" icon="envelope">
+    Developer-focused email delivery with robust tracking and analytics.
+  </Card>
+  <Card title="Postmark" icon="stamp">
+    Fast transactional email delivery with high deliverability rates.
+  </Card>
+  <Card title="Resend" icon="rotate-right">
+    Modern email API built for developers with React Email support.
+  </Card>
+  <Card title="Mailjet" icon="jet-fighter-up">
+    Email delivery with real-time tracking and list management.
+  </Card>
+  <Card title="Brevo" icon="b">
+    All-in-one marketing and transactional email platform.
+  </Card>
+  <Card title="Braze" icon="fire">
+    Customer engagement platform with advanced segmentation.
+  </Card>
+  <Card title="Infobip" icon="circle-info">
+    Global communications platform supporting email, SMS, and more.
+  </Card>
+  <Card title="MailerSend" icon="paper-plane-top">
+    Transactional email service with a generous free tier.
+  </Card>
+  <Card title="Mailtrap" icon="bug">
+    Email testing and staging environment for development workflows.
+  </Card>
+  <Card title="Mandrill" icon="mailchimp">
+    Transactional email add-on for Mailchimp users.
+  </Card>
+  <Card title="Outlook 365" icon="microsoft">
+    Send via Microsoft 365 SMTP for enterprise environments.
+  </Card>
+  <Card title="SparkPost" icon="bolt">
+    High-deliverability email API with predictive sending.
+  </Card>
+  <Card title="Custom SMTP" icon="server">
+    Use any SMTP server with Nodemailer-compatible configuration.
+  </Card>
+  <Card title="Email Webhook" icon="webhook">
+    Forward email events to your own endpoint for custom handling.
+  </Card>
+</CardGroup>
+
+<Tip>
+Don't see your provider? Novu also supports Netcore, Plunk, Maqsam, and others. Check the Integration Store for the full list.
+</Tip>

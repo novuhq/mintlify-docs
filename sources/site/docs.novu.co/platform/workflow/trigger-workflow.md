@@ -1,0 +1,144 @@
+# Source: https://docs.novu.co/platform/workflow/trigger-workflow
+
+# How to trigger Workflow in Novu
+
+Learn how workflows are triggered in Novu using the Event API, including triggering workflows for individual subscribers, attaching context data, and broadcasting notifications to topics.
+
+Triggering a workflow starts the execution of a notification pipeline in Novu. A workflow is triggered when an event is sent to Novu.
+
+When a workflow is triggered, Novu resolves the target subscribers, evaluates workflow logic, and executes each configured step to deliver notifications across the selected channels. Trigger requests can include payload data, context, or target a topic, allowing you to control both who receives the notification and what data is available during execution.
+
+You can test a workflow directly from the workflow editor in the Novu dashboard before triggering it from your application. This allows you to validate step configuration and notification content for a specific subscriber.
+
+## [Trigger Event API](https://docs.novu.co/#trigger-event-api)
+
+Workflows in Novu are triggered by sending events to the Event API. An event represents an action in your system, for example, an order created or a comment added and is mapped to a workflow using the workflow’s trigger identifier.
+
+When you trigger an event, you specify:
+
+- The workflow to execute.
+- The subscriber (or subscribers) the notification is intended for.
+- The payload data used to personalize notification content.
+
+At a minimum, triggering a workflow requires the workflow trigger identifier and a subscriber identifier.
+
+Node.jscURL
+
+```
+import { Novu } from "@novu/api";
+ 
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+ 
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: [{ subscriberId: "string" }],
+});
+```
+
+For full request options and response details, see the [Trigger Event API](https://docs.novu.co/api-reference/events/trigger-event) reference.
+
+Once the event is received, Novu executes the workflow, evaluates step conditions, resolves variables, and delivers notifications across the configured channels.
+
+From here, you can extend event triggering by attaching context data or targeting multiple subscribers using topics.
+
+## [Trigger a workflow with context](https://docs.novu.co/#trigger-a-workflow-with-context)
+
+You can attach context data when triggering a workflow using the Event API. Context can be referenced from existing contexts created in the Novu dashboard by providing the context type and identifier or defined inline at trigger time. Any context passed with the event is available to all downstream steps and channel templates during workflow execution.
+
+Context data is passed using the `context` object in the trigger request.
+
+Node.jscURL
+
+```
+import { Novu } from "@novu/api";
+ 
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+ 
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: [{ subscriberId: "string" }],
+  context: {
+    context_type: "context_identifier",
+    region: "us-east-1",
+    app: "dashboard"
+  }
+});
+```
+
+To learn how contexts work and how to manage them, see the [Context documentation](https://docs.novu.co/platform/workflow/advanced-features/contexts/contexts-in-workflows).
+
+## [Trigger a workflow to a topic](https://docs.novu.co/#trigger-a-workflow-to-a-topic)
+
+Once you’ve created topics and added subscribers, you can trigger workflows to those subscribers in bulk. Triggering a workflow to a topic is Novu’s primary mechanism for broadcasting notifications to large audiences with a single API call.
+
+When you trigger a workflow using a topic key, Novu performs a fan-out: it resolves all subscribers in the topic and executes the workflow independently for each subscriber.
+
+To learn how to create and manage Topics, see the [Topics API reference](https://docs.novu.co/api-reference/topics/topic-schema).
+
+### [Trigger to a single topic](https://docs.novu.co/#trigger-to-a-single-topic)
+
+The most common use case is sending a notification to all subscribers within a single topic. This is suitable for announcements, incident updates, or targeted broadcasts.
+
+To trigger a workflow to a topic, set the `to` field with `type: "Topic"` and provide the corresponding `topicKey`.
+
+Node.jscURL
+
+```
+import { Novu } from "@novu/api"
+ 
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
+ 
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: { type: "Topic", topicKey: "topic_key" },
+});
+```
+
+### [Trigger to multiple topics](https://docs.novu.co/#trigger-to-multiple-topics)
+
+You can broadcast a notification to multiple topics by passing an array to the `to` field. This is useful when your audience spans multiple groups, such as notifying both paying-customers and beta-testers.
+
+Novu automatically de-duplicates subscribers. If a subscriber belongs to more than one of the specified topics, they will receive the notification only once.
+
+Node.jscURL
+
+```
+import { Novu } from "@novu/api"
+ 
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
+ 
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: [
+    { type: "Topic", topicKey: "topic_key_1" }, 
+    { type: "Topic", topicKey: "topic_key_2" }
+  ]
+});
+```
+
+### [Exclude a subscriber from a topic trigger](https://docs.novu.co/#exclude-a-subscriber-from-a-topic-trigger)
+
+When a workflow is triggered to a topic, all subscribers in that topic are included by default. You can exclude specific subscribers from receiving the notification for that trigger by using the `exclude` field.
+
+This exclusion applies only to the current trigger request and does not modify the topic membership.
+
+Node.jscURL
+
+```
+import { Novu } from "@novu/api"
+ 
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>", });
+ 
+await novu.trigger({
+  workflowId: "workflow_identifier",
+  to: [{ type: "Topic", topicKey: "topic_key", exclude: ["subscriber-id"] }],
+});
+```
+
+[Personalize Content\\ \\ Learn how to personalize notification content in Novu using template variables, context data, and LiquidJS filters across all channel template editors.](https://docs.novu.co/platform/workflow/add-notification-content/personalize-content) [Monitor and Debug Workflow\\ \\ Learn how to monitor workflow executions and debug issues from the Novu Activity Feed.](https://docs.novu.co/platform/workflow/monitor-and-debug-workflow)
+
+### On this page
+
+[Trigger Event API](https://docs.novu.co/#trigger-event-api) [Trigger a workflow with context](https://docs.novu.co/#trigger-a-workflow-with-context) [Trigger a workflow to a topic](https://docs.novu.co/#trigger-a-workflow-to-a-topic) [Trigger to a single topic](https://docs.novu.co/#trigger-to-a-single-topic) [Trigger to multiple topics](https://docs.novu.co/#trigger-to-multiple-topics) [Exclude a subscriber from a topic trigger](https://docs.novu.co/#exclude-a-subscriber-from-a-topic-trigger)
+
+Copy page as markdown[Edit this page on GitHub](https://github.com/novuhq/docs/edit/main/content/docs/platform/workflow/trigger-workflow.mdx)Open in ChatGPTOpen in Claude

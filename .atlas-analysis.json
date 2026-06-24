@@ -1,19 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Novu",
+  "projectType": "saas",
+  "projectName": "Novu",
+  "projectDescription": "Open-source notification infrastructure for sending multi-channel notifications (in-app, email, SMS, push, and chat) via a unified API, visual workflow builder, and embeddable Inbox component.",
   "theme": "luma",
-  "colors": {
-    "primary": "#d0156e",
-    "light": "#fb9746",
-    "dark": "#040404"
-  },
-  "favicon": "https://media.brand.dev/a0f8b6a5-b162-4f98-a8c6-7a041e0cefb2.svg",
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/novuhq/novu"
-    }
-  },
+  "primaryColor": "#d0156e",
+  "lightColor": "#fb9746",
+  "darkColor": "#040404",
   "navigation": {
     "tabs": [
       {
@@ -190,5 +182,57 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Embeddable real-time in-app notification Inbox component (React, Next.js, Vue, Angular, Vanilla JS)",
+    "Visual no-code workflow builder with multi-step notification sequences",
+    "Code-first workflow SDK (Novu Framework) for TypeScript/Node.js",
+    "Unified API for email, SMS, push, in-app, and chat channels",
+    "Subscriber management with preferences and personalization",
+    "Topic-based fan-out for broadcasting to subscriber groups",
+    "Digest step to aggregate multiple events into a single notification",
+    "Delay/scheduling steps for time-based notification flows",
+    "Multi-environment support (development, staging, production)",
+    "Provider integrations: SendGrid, Twilio, FCM, Slack, and 50+ others",
+    "Outbound webhooks for real-time event streaming",
+    "AI Agent Communication Infrastructure (ACI) for conversational agents",
+    "Multi-tenancy support for SaaS applications",
+    "Activity feed for observability and debugging"
+  ],
+  "publicApiSurface": [
+    "POST /v1/events/trigger",
+    "POST /v1/events/trigger/bulk",
+    "POST /v1/subscribers",
+    "POST /v1/subscribers/bulk",
+    "GET /v1/subscribers/:subscriberId",
+    "PUT /v1/subscribers/:subscriberId",
+    "DELETE /v1/subscribers/:subscriberId",
+    "PUT /v1/subscribers/:subscriberId/credentials",
+    "PUT /v1/subscribers/:subscriberId/preferences",
+    "GET /v1/subscribers/:subscriberId/subscriptions",
+    "POST /v1/topics",
+    "GET /v1/topics",
+    "POST /v1/topics/:topicKey/subscribers",
+    "GET /v1/topics/:topicKey/subscribers/:subscriberId",
+    "DELETE /v1/messages/:messageId",
+    "GET /v1/notifications",
+    "workflow() — Novu Framework function to define code-first workflows",
+    "step.email() — Framework email channel step",
+    "step.inApp() — Framework in-app channel step",
+    "step.sms() — Framework SMS channel step",
+    "step.push() — Framework push channel step",
+    "step.chat() — Framework chat channel step",
+    "step.delay() — Framework delay action step",
+    "step.digest() — Framework digest action step",
+    "step.custom() — Framework custom action step",
+    "<Inbox /> — React/Next.js/Vue embeddable notification inbox component",
+    "<Bell /> — Notification bell component",
+    "<Notifications /> — Notification list component",
+    "<Subscription /> — User preference subscription component",
+    "NovuProvider — React context provider",
+    "useNotifications() — React hook for notification data",
+    "novu.trigger() — Server SDK method to fire a workflow",
+    "novu.subscribers.create() — Server SDK method to create a subscriber",
+    "novu.subscribers.createBulk() — Server SDK method for bulk subscriber creation"
+  ]
 }

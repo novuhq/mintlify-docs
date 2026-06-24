@@ -1,0 +1,267 @@
+---
+title: "Topics API: Manage Subscriber Groups"
+sidebarTitle: "Topics"
+description: "Use the Novu Topics API to create subscriber groups and trigger bulk notifications. Add and remove subscribers from topics via REST endpoints."
+---
+
+Topics let you group subscribers around a shared interest or context, then trigger notifications to the entire group in a single API call. Instead of looping through individual subscriber IDs, you add subscribers to a topic once and trigger to the topic key going forward.
+
+A topic is created automatically if it does not exist when you first add subscribers to it. Topics are environment-scoped — the same key can exist independently in development and production.
+
+<Note>
+  The Topics API uses **v2** endpoints (`/v2/topics`) for create and subscription operations.
+</Note>
+
+## Create a topic
+
+Create a new topic or update an existing one. Pass `?failIfExists=true` to prevent accidental updates.
+
+```
+POST https://api.novu.co/v2/topics
+```
+
+### Request body
+
+<ParamField body="key" type="string" required>
+  The unique key identifier for the topic. Use alphanumeric characters, hyphens (`-`), underscores (`_`), or colons (`:`). Minimum 1 character, maximum 100 characters.
+
+  Example keys: `product-updates`, `team:engineering`, `task:12345`
+</ParamField>
+
+<ParamField body="name" type="string">
+  A human-readable display name for the topic. Maximum 100 characters.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="failIfExists" type="boolean">
+  If `true`, returns an error when a topic with the same key already exists instead of updating it.
+</ParamField>
+
+### Response
+
+Returns `200 OK` (existing topic updated) or `201 Created` (new topic).
+
+<ResponseField name="_id" type="string" required>
+  The internal Novu ID for the topic.
+</ResponseField>
+
+<ResponseField name="key" type="string" required>
+  The unique key of the topic.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The display name of the topic.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp of when the topic was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of the last update.
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.novu.co/v2/topics" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "key": "product-updates",
+    "name": "Product Updates"
+  }'
+```
+
+```javascript JavaScript
+import { Novu } from '@novu/api';
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
+
+await novu.topics.create({
+  key: 'product-updates',
+  name: 'Product Updates',
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v2/topics"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "key": "product-updates",
+    "name": "Product Updates",
+}
+
+response = requests.post(url, headers=headers, json=payload)
+```
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "_id": "64da692e9a94fb2e6449ad06",
+  "key": "product-updates",
+  "name": "Product Updates",
+  "createdAt": "2023-08-15T00:00:00.000Z",
+  "updatedAt": "2023-08-15T00:00:00.000Z"
+}
+```
+
+---
+
+## Add subscribers to a topic
+
+Subscribe one or more subscribers to a topic. If the topic does not exist, Novu creates it automatically.
+
+```
+POST https://api.novu.co/v2/topics/{topicKey}/subscriptions
+```
+
+### Path parameters
+
+<ParamField path="topicKey" type="string" required>
+  The key identifier of the topic.
+</ParamField>
+
+### Request body
+
+<ParamField body="subscriptions" type="array">
+  An array of subscriber IDs (strings) or subscription objects. Maximum 100 per request.
+
+  Pass strings for simple subscriptions:
+  ```json
+  "subscriptions": ["user-123", "user-456"]
+  ```
+
+  Pass objects to include a custom identifier per subscription:
+  ```json
+  "subscriptions": [
+    { "subscriberId": "user-123", "identifier": "user-123-sub-a" },
+    { "subscriberId": "user-456", "identifier": "user-456-sub-b" }
+  ]
+  ```
+</ParamField>
+
+<ParamField body="name" type="string">
+  Optionally set or update the topic's display name in the same request.
+</ParamField>
+
+<ParamField body="preferences" type="array">
+  Workflow preferences to apply for this subscription. Accepts workflow ID strings or preference objects with conditions.
+</ParamField>
+
+### Response
+
+Returns `201 Created` with subscription results.
+
+<ResponseField name="data" type="array" required>
+  The list of successfully created subscription objects.
+</ResponseField>
+
+<ResponseField name="meta" type="object" required>
+  Metadata about the operation: `totalCount`, `successful`, and `failed` counts.
+</ResponseField>
+
+<ResponseField name="errors" type="array">
+  Failed subscription attempts with `subscriberId`, `code`, and `message` for each failure.
+</ResponseField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.novu.co/v2/topics/product-updates/subscriptions" \
+  --header "Authorization: ApiKey YOUR_SECRET_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "subscriptions": ["user-123", "user-456", "user-789"]
+  }'
+```
+
+```javascript JavaScript
+await novu.topics.addSubscribers('product-updates', {
+  subscriptions: ['user-123', 'user-456', 'user-789'],
+});
+```
+
+```python Python
+import requests
+
+url = "https://api.novu.co/v2/topics/product-updates/subscriptions"
+headers = {
+    "Authorization": f"ApiKey {NOVU_SECRET_KEY}",
+    "Content-Type": "application/json",
+}
+payload = {
+    "subscriptions": ["user-123", "user-456", "user-789"],
+}
+
+response = requests.post(url, headers=headers, json=payload)
+```
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "data": [
+    {
+      "_id": "64f5e95d3d7946d80d0cb679",
+      "topic": {
+        "_id": "64da692e9a94fb2e6449ad06",
+        "key": "product-updates",
+        "name": "Product Updates"
+      },
+      "subscriber": {
+        "_id": "64da692e9a94fb2e6449ad07",
+        "subscriberId": "user-123",
+        "firstName": "Jane",
+        "email": "jane@example.com"
+      },
+      "createdAt": "2025-04-24T05:40:21Z",
+      "updatedAt": "2025-04-24T05:40:21Z"
+    }
+  ],
+  "meta": {
+    "totalCount": 3,
+    "successful": 3,
+    "failed": 0
+  }
+}
+```
+
+---
+
+## Trigger a notification to a topic
+
+To send a notification to all subscribers in a topic, use the [Trigger Event endpoint](/api-reference/trigger-event) and pass the topic key in the `to` field using the `type: "Topic"` object format:
+
+```json
+{
+  "name": "product-update-announcement",
+  "to": [{ "type": "Topic", "topicKey": "product-updates" }],
+  "payload": {
+    "announcementId": "v2-release-notes"
+  }
+}
+```
+
+---
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Trigger Event" icon="bolt" href="/api-reference/trigger-event">
+    Send a notification to a topic or individual subscriber.
+  </Card>
+  <Card title="Subscribers" icon="users" href="/api-reference/subscribers">
+    Create and manage subscriber records before adding them to topics.
+  </Card>
+  <Card title="Bulk Trigger" icon="layer-group" href="/api-reference/bulk-trigger">
+    Trigger multiple workflows in a single API call.
+  </Card>
+</CardGroup>

@@ -1,0 +1,158 @@
+---
+title: "Digest Step: Batch Events in Framework Workflows"
+sidebarTitle: "Digest"
+description: "Use step.digest() in Novu Framework to aggregate multiple trigger events into one notification, with access to all batched events in the next step."
+---
+
+The digest step collects multiple workflow trigger events that fire within a time window and collapses them into a single notification. Instead of sending 50 individual "someone liked your photo" notifications to a user, the digest waits for a specified period and then fires one: "Alice and 49 others liked your photo."
+
+<Info>
+  Novu's digest engine pauses execution at the `step.digest()` call, accumulates all incoming triggers for that subscriber during the window, and then resumes the workflow with the full list of batched events.
+</Info>
+
+## Defining a Digest Step
+
+Call `step.digest()` with a step ID and a resolver that returns the window configuration. The resolved value must include `unit` and `amount`.
+
+```typescript
+const digestResult = await step.digest('digest', async () => {
+  return {
+    unit: 'days',    // 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months'
+    amount: 3,       // number of units to collect events for
+  };
+});
+```
+
+## Accessing Digested Events
+
+`step.digest()` returns an object with an `events` array. Each event contains the `id`, `time`, and original `payload` from that trigger. Use the array in subsequent steps to build rich, personalized digest content.
+
+```typescript
+const { events } = await step.digest('digest-3-days', async () => {
+  return {
+    unit: 'days',
+    amount: 3,
+  };
+});
+
+await step.email('send-digest-email', async () => {
+  const eventCount = events.length;
+
+  return {
+    subject: 'Your Activity Digest',
+    body: `You have ${eventCount} new events in the last 3 days.`,
+  };
+});
+```
+
+Each event in the `events` array has the following shape:
+
+| Property | Type | Description |
+|---|---|---|
+| `id` | `string` | The job ID of the digested event |
+| `time` | `string` | ISO timestamp of when the event was triggered |
+| `payload` | `object` | The original payload passed when the workflow was triggered |
+
+## Cron-Based Digest
+
+Use a cron expression instead of `unit` and `amount` to digest events on a fixed schedule — for example, every day at midnight.
+
+```typescript
+const digestedEvents = await step.digest('cron-digest', async () => {
+  return {
+    cron: '0 0 * * *', // every day at midnight
+  };
+});
+```
+
+## Custom Digest Key
+
+By default, Novu digests events per `subscriberId`. Use `digestKey` to digest events by a combination of `subscriberId` **and** a custom key — for example, grouping all events for the same ticket together.
+
+```typescript
+import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const customDigestKey = workflow(
+  'custom-digest-key',
+  async ({ step, payload }) => {
+    const { events } = await step.digest('digest-step', async () => {
+      return {
+        unit: 'hours',
+        amount: 1,
+        digestKey: payload.ticket_id,
+      };
+    });
+
+    await step.email('send-ticket-digest', async () => {
+      const updates = events.map((e) => e.payload.message).join('\n');
+      return {
+        subject: `${events.length} update(s) on ticket #${payload.ticket_id}`,
+        body: updates,
+      };
+    });
+  },
+  {
+    payloadSchema: z.object({
+      ticket_id: z.string(),
+      message: z.string(),
+    }),
+  }
+);
+```
+
+## Full Digest Workflow Example
+
+Here is a complete workflow that sends a daily activity summary email listing all new comments on a user's posts:
+
+```typescript
+import { workflow } from '@novu/framework';
+import { z } from 'zod';
+
+export const dailyCommentDigest = workflow(
+  'daily-comment-digest',
+  async ({ step, payload }) => {
+    const { events } = await step.digest('collect-comments', async () => {
+      return {
+        unit: 'hours',
+        amount: 24,
+      };
+    });
+
+    await step.email('send-summary', async () => {
+      const commentList = events
+        .map((e) => `• ${e.payload.author_name}: "${e.payload.comment}"`)
+        .join('\n');
+
+      return {
+        subject: `You have ${events.length} new comment(s) on your posts`,
+        body: `Here is your daily summary:\n\n${commentList}`,
+      };
+    });
+  },
+  {
+    payloadSchema: z.object({
+      author_name: z.string(),
+      comment: z.string(),
+      post_id: z.number(),
+    }),
+  }
+);
+```
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="If the digest step fails, will the workflow continue?">
+    No. If the digest step encounters an error, workflow execution stops immediately. The subsequent channel steps will not run.
+  </Accordion>
+  <Accordion title="Can I have two digest steps in one workflow?">
+    Not directly. Novu does not support two digest steps in a single workflow. However, you can achieve two-level digesting by creating a second workflow with its own digest step and triggering it from a `step.custom()` call in the first workflow.
+  </Accordion>
+  <Accordion title="Can I use digest event data in step controls?">
+    Not currently. Digest event data is only accessible from code inside the step handler. To display digested data in a template, build a custom component in your resolver and pass `events` into it directly.
+  </Accordion>
+  <Accordion title="Does changing step content affect already-pending digests?">
+    No. Changing step content after a workflow has been triggered with an active digest window does not affect the pending digested notifications — they will send with the content that was active when the digest started.
+  </Accordion>
+</AccordionGroup>

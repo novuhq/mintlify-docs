@@ -1,0 +1,209 @@
+---
+title: "Novu Framework Quickstart"
+sidebarTitle: "Quickstart"
+description: "Create your first code-first notification workflow with the Novu Framework. Install the package, define a workflow, and sync to your Novu dashboard."
+---
+
+This guide walks you through adding a Novu Framework [Bridge endpoint](/framework/endpoint) to a Next.js application, defining your first workflow, and triggering a test notification — all in a few minutes.
+
+<Info>
+  You need a Novu account and a secret key to complete this guide. Grab your `NOVU_SECRET_KEY` from the [API Keys page](https://dashboard.novu.co/api-keys) in the Novu dashboard.
+</Info>
+
+## Option 1 — Scaffold a New App
+
+Run the Novu init command to generate a ready-to-use Next.js application with a Bridge endpoint and a sample workflow pre-configured:
+
+```bash
+npx novu init --secret-key=<YOUR_NOVU_SECRET_KEY>
+```
+
+The generated app includes:
+- An `.env` file with `NOVU_SECRET_KEY` already set
+- A sample workflow demonstrating Step Controls
+- A `/api/novu` Bridge endpoint served by Next.js
+
+Start the dev server:
+
+```bash
+cd my-novu-app && npm run dev
+```
+
+Your application starts on `http://localhost:4000` and the Bridge endpoint is available at `/api/novu`.
+
+<Note>
+  If your Next.js app runs on a port other than `4000`, pass the port to the Novu dev tunnel: `npx novu@latest dev --port <YOUR_PORT>`
+</Note>
+
+## Option 2 — Add to an Existing Application
+
+Follow these steps to add Novu Framework to an existing Next.js project.
+
+<Steps>
+  <Step title="Install the package">
+    Add `@novu/framework` to your project:
+
+    ```bash
+    npm install @novu/framework
+    ```
+  </Step>
+
+  <Step title="Create a workflow">
+    Create a file to define your workflow. This example sends a welcome email when a new user signs up:
+
+    ```typescript workflows/new-signup.ts
+    import { workflow } from '@novu/framework';
+
+    export const newSignupWorkflow = workflow(
+      'new-signup',
+      async ({ step, payload }) => {
+        await step.email('send-email', async () => {
+          return {
+            subject: `Welcome to Acme, ${payload.name}!`,
+            body: 'We are excited to have you on board.',
+          };
+        });
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+          },
+          required: ['name'],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+    ```
+  </Step>
+
+  <Step title="Expose the Bridge endpoint">
+    Create a Next.js API route that serves your workflow to the Novu Worker Engine. Place this file at `app/api/novu/route.ts` (App Router) or `pages/api/novu.ts` (Pages Router).
+
+    <CodeGroup>
+      ```typescript app/api/novu/route.ts (App Router)
+      import { serve } from '@novu/framework/next';
+      import { newSignupWorkflow } from '../../../workflows/new-signup';
+
+      export const { GET, POST, PUT } = serve({
+        workflows: [newSignupWorkflow],
+      });
+      ```
+
+      ```typescript pages/api/novu.ts (Pages Router)
+      import { serve } from '@novu/framework/next';
+      import { newSignupWorkflow } from '../../workflows/new-signup';
+
+      export default serve({
+        workflows: [newSignupWorkflow],
+      });
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Set your secret key">
+    Add your Novu secret key to your environment file so the Bridge endpoint can authenticate requests from Novu Cloud:
+
+    ```bash .env.local
+    NOVU_SECRET_KEY=<YOUR_NOVU_SECRET_KEY>
+    ```
+
+    <Warning>
+      Never commit your `NOVU_SECRET_KEY` to source control. Use environment variables or a secrets manager in all environments.
+    </Warning>
+  </Step>
+
+  <Step title="Start the dev server">
+    Run your Next.js dev server:
+
+    ```bash
+    npm run dev
+    ```
+
+    Then start the Novu local tunnel so the dashboard can reach your endpoint during development:
+
+    ```bash
+    npx novu@latest dev --port 3000
+    ```
+  </Step>
+
+  <Step title="Sync your workflow to Novu">
+    Once your endpoint is running, sync your workflows to the Novu dashboard so they can be triggered:
+
+    ```bash
+    npx novu@latest sync \
+      --bridge-url https://<YOUR_DEPLOYED_URL>/api/novu \
+      --secret-key <NOVU_SECRET_KEY>
+    ```
+
+    After syncing, your `new-signup` workflow appears in the Novu dashboard.
+  </Step>
+
+  <Step title="Trigger your first notification">
+    Trigger the workflow via the Novu API to send your first notification:
+
+    ```bash
+    curl -X POST https://api.novu.co/v1/events/trigger \
+      -H 'Authorization: ApiKey <YOUR_API_KEY>' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "name": "new-signup",
+        "to": "subscriber-id",
+        "payload": {
+          "name": "Alice"
+        }
+      }'
+    ```
+
+    You can also trigger workflows directly from the Novu dashboard or Local Studio while developing.
+  </Step>
+</Steps>
+
+## Supported Frameworks
+
+The `serve` function is available for all major Node.js frameworks:
+
+<CardGroup cols={2}>
+  <Card title="Next.js" icon="n" href="/framework/endpoint">
+    `@novu/framework/next`
+  </Card>
+  <Card title="Express" icon="server" href="/framework/endpoint">
+    `@novu/framework/express`
+  </Card>
+  <Card title="Remix" icon="react" href="/framework/endpoint">
+    `@novu/framework/remix`
+  </Card>
+  <Card title="SvelteKit" icon="s" href="/framework/endpoint">
+    `@novu/framework/sveltekit`
+  </Card>
+  <Card title="Nuxt" icon="n" href="/framework/endpoint">
+    `@novu/framework/nuxt`
+  </Card>
+  <Card title="NestJS" icon="node" href="/framework/endpoint">
+    `@novu/framework/nest`
+  </Card>
+  <Card title="H3" icon="h" href="/framework/endpoint">
+    `@novu/framework/h3`
+  </Card>
+  <Card title="AWS Lambda" icon="aws" href="/framework/endpoint">
+    `@novu/framework/lambda`
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Steps & Channels" icon="layer-group" href="/framework/steps-and-channels">
+    Explore email, in-app, SMS, push, chat, delay, and digest steps.
+  </Card>
+  <Card title="Controls" icon="sliders" href="/framework/controls">
+    Expose editable fields to non-technical teammates in the dashboard.
+  </Card>
+  <Card title="Digest" icon="layer-group" href="/framework/digest">
+    Batch multiple events into a single notification.
+  </Card>
+  <Card title="Production" icon="rocket" href="/framework/production">
+    Deploy your Bridge endpoint and sync to your production environment.
+  </Card>
+</CardGroup>

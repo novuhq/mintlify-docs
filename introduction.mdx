@@ -1,0 +1,88 @@
+---
+title: "Novu: Open-Source Notification Infrastructure"
+sidebarTitle: "Introduction"
+description: "Novu is the open-source notification platform for sending in-app, email, SMS, push, and chat notifications from a single unified API."
+---
+
+Novu gives you everything you need to build, manage, and deliver notifications across every channel — without the complexity of building it yourself. Connect an embeddable in-app Inbox to your frontend in minutes, define multi-step workflows visually or in code, and route messages through your preferred providers.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="bolt" href="/quickstart/nextjs">
+    Add a notification inbox to your Next.js app in under 5 minutes.
+  </Card>
+  <Card title="How Novu Works" icon="circle-info" href="/concepts/how-novu-works">
+    Understand workflows, subscribers, environments, and integrations.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Trigger notifications and manage subscribers via REST API.
+  </Card>
+  <Card title="Novu Framework" icon="brackets-curly" href="/framework/introduction">
+    Define notification workflows in code with full TypeScript support.
+  </Card>
+</CardGroup>
+
+## What you can build with Novu
+
+<CardGroup cols={2}>
+  <Card title="In-App Notifications" icon="bell" href="/inbox/overview">
+    Embed a real-time notification bell and feed with six lines of code.
+  </Card>
+  <Card title="Multi-Channel Workflows" icon="diagram-project" href="/workflows/create">
+    Send email → wait → then SMS if unread, all from one workflow.
+  </Card>
+  <Card title="Digest Notifications" icon="layer-group" href="/workflows/digest">
+    Aggregate bursts of events into a single "You have 10 new messages" alert.
+  </Card>
+  <Card title="AI Agent Messaging" icon="robot" href="/agents/overview">
+    Connect AI agents to Slack, Teams, WhatsApp, and other chat platforms.
+  </Card>
+</CardGroup>
+
+## Get started
+
+<Steps>
+  <Step title="Create your Novu account">
+    Sign up at [dashboard.novu.co](https://dashboard.novu.co/auth/sign-up) — the free tier is enough to get started.
+  </Step>
+  <Step title="Add the Inbox to your app">
+    Install `@novu/nextjs` (or `@novu/react`) and drop the `<Inbox />` component into your layout. See the [Next.js Quickstart](/quickstart/nextjs).
+  </Step>
+  <Step title="Create a workflow">
+    Open the Novu dashboard, click **Workflows → Create workflow**, add an In-App step, and trigger it. Your notification appears in the Inbox instantly.
+  </Step>
+  <Step title="Add more channels">
+    Connect SendGrid, Twilio, Slack, or any other provider in the [Integration Store](/integrations/overview) and add extra steps to your workflow.
+  </Step>
+</Steps>
+
+## SDKs
+
+Novu provides official SDKs for every environment:
+
+**Client-side** — embed the Inbox component directly in your frontend:
+
+<CardGroup cols={3}>
+  <Card title="React" icon="react" href="/sdks/react">
+    @novu/react
+  </Card>
+  <Card title="JavaScript" icon="js" href="/sdks/javascript">
+    @novu/js
+  </Card>
+  <Card title="React Native" icon="mobile" href="/sdks/react-native">
+    @novu/react-native
+  </Card>
+</CardGroup>
+
+**Server-side** — trigger notifications and manage subscribers from your backend:
+
+<CardGroup cols={3}>
+  <Card title="TypeScript" icon="js" href="/sdks/typescript">
+    @novu/api
+  </Card>
+  <Card title="Python" icon="python" href="/sdks/python">
+    novu-py
+  </Card>
+  <Card title="Go" icon="golang" href="/sdks/go">
+    novu-go
+  </Card>
+</CardGroup>

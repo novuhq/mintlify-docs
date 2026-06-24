@@ -1,0 +1,96 @@
+---
+title: "Agent Skills: Extend Your Managed Agent"
+sidebarTitle: "Skills"
+description: "Add skills to your Novu managed agent to extend its capabilities with web search, data lookup, and custom tool integrations."
+---
+
+Skills are instruction files that teach your managed agent how to handle specific tasks. When the system prompt alone is not detailed enough for a multi-step workflow or a domain-specific process, a skill fills the gap. The AI platform reads the skill and applies its instructions when it decides the skill is relevant to the current conversation turn.
+
+## What a skill looks like
+
+A skill is a `SKILL.md` file written in Markdown. It contains step-by-step instructions the AI platform follows when a relevant situation arises.
+
+A skill might describe:
+
+- How to triage a support ticket and assign it to the right team.
+- How to walk a user through an onboarding checklist.
+- How to pull data from an MCP server and format it as a summary.
+
+Keep each skill focused on one task. A skill that covers too many scenarios becomes harder for the model to apply correctly.
+
+## Add a skill from GitHub
+
+<Steps>
+  <Step title="Open your agent's settings">
+    Go to the [Novu dashboard](https://dashboard.novu.co) and navigate to your managed agent's detail page.
+  </Step>
+  <Step title="Open the Skills section">
+    Open the **Skills** section in the agent settings.
+  </Step>
+  <Step title="Select GitHub URL as the source">
+    Select **GitHub URL** as the source.
+  </Step>
+  <Step title="Paste the repository URL">
+    Paste the public repository URL. You can point to:
+    - The root of a repo (Novu looks for `SKILL.md` at the top level).
+    - A specific branch or subfolder — for example, `https://github.com/org/repo/tree/main/skills/triage`.
+  </Step>
+  <Step title="Upload">
+    Click **Upload**. Novu downloads the files, bundles them, and sends them to the AI platform. The platform assigns a stable skill ID.
+  </Step>
+</Steps>
+
+## Add a skill inline
+
+<Steps>
+  <Step title="Open the Skills section">
+    Go to the **Skills** section in the agent settings on the [Novu dashboard](https://dashboard.novu.co).
+  </Step>
+  <Step title="Select Inline content">
+    Select **Inline content** as the source.
+  </Step>
+  <Step title="Paste your skill content">
+    Paste your `SKILL.md` content directly into the text field.
+  </Step>
+  <Step title="Upload">
+    Click **Upload**. This is useful for quick iterations or skills that do not need to live in a repository.
+  </Step>
+</Steps>
+
+## Manage existing skills
+
+### Versioning
+
+If you upload a skill with the same display title as an existing one, the platform creates a new version automatically. The agent always uses the latest version.
+
+### Remove a skill
+
+Go to the **Skills** section and delete the skill from the list. The agent stops using the skill on the next conversation turn.
+
+## Tips for writing good skills
+
+<Tip>
+  Apply these practices to get the most accurate and consistent behavior from your managed agent.
+</Tip>
+
+- **Be specific** — Describe the exact steps the agent should follow, not just the goal.
+- **Include examples** — Show sample inputs and expected outputs where possible.
+- **Keep it focused** — Write one skill per task. Broad skills are harder for the model to apply correctly.
+- **Test with real conversations** — Send messages that should trigger the skill and verify the agent follows the instructions.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Servers" icon="plug" href="/agents/mcp-servers">
+    Enable external tools like Linear, GitHub, and Notion for your managed agent.
+  </Card>
+  <Card title="Managed Agent" icon="sparkles" href="/agents/managed-agent">
+    Learn about connectors, built-in tools, and conversation flow for managed agents.
+  </Card>
+  <Card title="Quickstart" icon="bolt" href="/agents/quickstart">
+    Create a managed agent with Claude and connect it to Slack.
+  </Card>
+  <Card title="Conversations" icon="comments" href="/agents/conversations">
+    Monitor your agent's conversations and tool use from the dashboard.
+  </Card>
+</CardGroup>

@@ -1,0 +1,80 @@
+---
+title: "Novu REST API Reference Overview"
+sidebarTitle: "Overview"
+description: "The Novu REST API lets you trigger notifications, manage subscribers and topics, and query notification history. Base URL: https://api.novu.co/v1."
+---
+
+The Novu REST API is a server-side HTTP API for triggering notification workflows, managing subscribers and topics, querying notification history, and configuring your Novu environment. All requests are authenticated with an API key and return JSON responses.
+
+<Warning>
+  The Novu API is intended for **server-side use only**. Using it in client-side code (browser JavaScript, mobile apps) will result in Cross-Origin Resource Sharing (CORS) errors and exposes your secret key. Always call the API from your backend.
+</Warning>
+
+## Base URLs
+
+Novu operates two regional API instances. Use the one that matches your account region:
+
+| Region | Base URL |
+|--------|----------|
+| United States (default) | `https://api.novu.co/v1` |
+| European Union | `https://eu.api.novu.co/v1` |
+
+All endpoint paths below are relative to the base URL. For example, to trigger an event on the US instance:
+
+```
+POST https://api.novu.co/v1/events/trigger
+```
+
+## Authentication
+
+All requests require an API key in the `Authorization` header, prefixed with `ApiKey `:
+
+```bash
+Authorization: ApiKey YOUR_SECRET_KEY
+```
+
+Find your secret key in the **API Keys** section of the [Novu dashboard](https://dashboard.novu.co). See the [Authentication](/api-reference/authentication) page for full details and security best practices.
+
+## Key endpoints
+
+<CardGroup cols={2}>
+  <Card title="Trigger Event" icon="bolt" href="/api-reference/trigger-event">
+    `POST /v1/events/trigger` — Send a notification to one or more subscribers.
+  </Card>
+  <Card title="Bulk Trigger" icon="layer-group" href="/api-reference/bulk-trigger">
+    `POST /v1/events/trigger/bulk` — Trigger up to 100 events in a single request.
+  </Card>
+  <Card title="Subscribers" icon="users" href="/api-reference/subscribers">
+    Create, update, bulk-import, and manage subscriber records.
+  </Card>
+  <Card title="Topics" icon="tag" href="/api-reference/topics">
+    Group subscribers into topics and trigger bulk notifications.
+  </Card>
+  <Card title="Messages" icon="envelope" href="/api-reference/messages">
+    Query notification history and delete individual messages.
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api-reference/rate-limiting">
+    Per-plan rate limits, token bucket algorithm, and retry guidance.
+  </Card>
+</CardGroup>
+
+## Idempotency
+
+Pass a `transactionId` in the request body or an `Idempotency-Key` header to prevent duplicate notifications when retrying failed requests. Novu returns the cached response for any repeated request with the same key. See [Idempotency](/api-reference/idempotency) for full details.
+
+## Error responses
+
+The API uses standard HTTP status codes:
+
+| Code | Meaning |
+|------|---------|
+| `200` / `201` | Success |
+| `400` | Bad request — check your request body |
+| `401` | Unauthorized — missing or invalid API key |
+| `403` | Forbidden — insufficient permissions |
+| `404` | Resource not found |
+| `409` | Conflict — idempotency key in use |
+| `413` | Payload too large — exceeds 512 KB limit |
+| `422` | Unprocessable entity — validation error |
+| `429` | Too many requests — rate limit exceeded |
+| `500` | Internal server error |

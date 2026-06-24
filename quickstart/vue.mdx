@@ -1,0 +1,210 @@
+---
+title: "Get Started with Novu in Vue.js"
+sidebarTitle: "Vue"
+description: "Embed real-time in-app notifications in your Vue.js application using Novu. Install the SDK and add the Inbox component in minutes."
+---
+
+Novu's `@novu/js` JavaScript SDK lets you mount a fully-featured notification inbox inside any Vue.js application. Because Novu doesn't currently ship a native Vue component, this guide shows you how to use `NovuUI` from `@novu/js/ui` to programmatically mount the Inbox into a Vue component using lifecycle hooks.
+
+## Prerequisites
+
+- A [Novu account](https://dashboard.novu.co/auth/sign-up) — create one for free or [sign in](https://dashboard.novu.co/auth/sign-in) if you already have one.
+- Node.js 18+ and a Vue 3 project.
+
+## Setup
+
+<Steps>
+
+### Create a Vue application
+
+If you don't have an existing project, scaffold one now:
+
+<CodeGroup>
+```bash npm
+npm create vue@latest novu-inbox-vue
+```
+```bash pnpm
+pnpm create vue@latest novu-inbox-vue
+```
+```bash yarn
+yarn create vue novu-inbox-vue
+```
+```bash bun
+bun create vue novu-inbox-vue
+```
+</CodeGroup>
+
+<Info>
+  Novu uses `@novu/js` for Vue. There is no native Vue-specific Novu package — the JavaScript SDK handles mounting via the DOM.
+</Info>
+
+### Install `@novu/js`
+
+Add the Novu JavaScript SDK to your project:
+
+<CodeGroup>
+```bash npm
+npm install @novu/js
+```
+```bash pnpm
+pnpm add @novu/js
+```
+```bash yarn
+yarn add @novu/js
+```
+```bash bun
+bun add @novu/js
+```
+</CodeGroup>
+
+### Create the NovuInbox component
+
+Create `src/components/NovuInbox.vue`. The component mounts the Novu Inbox UI onto a plain `<div>` using Vue's `onMounted` and `onUnmounted` hooks:
+
+```vue src/components/NovuInbox.vue
+<template>
+  <!--
+    This empty div is the mounting point for the Novu Inbox.
+    The ref attribute gives us direct access to the DOM element.
+  -->
+  <div ref="novuInbox"></div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from "vue";
+import { NovuUI } from "@novu/js/ui";
+
+interface NovuOptions {
+  options: {
+    applicationIdentifier: string;
+    subscriberId: string;
+  };
+}
+
+// Reactive reference to the mount-point DOM element
+const novuInbox = ref<HTMLElement | null>(null);
+// Store the instance so we can clean it up on unmount
+let novuInstance: NovuUI | null = null;
+
+onMounted(() => {
+  if (!novuInbox.value) {
+    console.error("Novu inbox container element not found");
+    return;
+  }
+
+  try {
+    const novu = new NovuUI({
+      options: {
+        applicationIdentifier: "YOUR_APPLICATION_IDENTIFIER",
+        subscriberId: "YOUR_SUBSCRIBER_ID",
+      },
+    } as NovuOptions);
+
+    novu.mountComponent({
+      name: "Inbox",
+      props: {},
+      element: novuInbox.value,
+    });
+
+    novuInstance = novu;
+  } catch (error) {
+    console.error("Failed to initialize Novu inbox:", error);
+  }
+});
+
+// Unmount cleanly to prevent memory leaks
+onUnmounted(() => {
+  if (novuInstance && novuInbox.value) {
+    try {
+      novuInstance.unmountComponent(novuInbox.value);
+    } catch (error) {
+      console.error("Failed to unmount Novu inbox:", error);
+    }
+  }
+});
+</script>
+```
+
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` with the value from **API Keys** in your Novu dashboard, and `YOUR_SUBSCRIBER_ID` with your user's unique ID. Novu automatically creates a subscriber if the provided ID doesn't exist yet.
+</Note>
+
+**Finding your credentials:**
+
+- **`applicationIdentifier`** — In the [Novu dashboard](https://dashboard.novu.co), click **API Keys** and copy your Application Identifier.
+- **`subscriberId`** — This represents a user in your system, typically their database user ID. For testing, use the auto-generated ID from the **Subscribers** tab in the dashboard.
+
+### Add NovuInbox to your app
+
+Import and render `NovuInbox` in `src/App.vue`:
+
+```vue src/App.vue
+<script setup lang="ts">
+import NovuInbox from "./components/NovuInbox.vue";
+</script>
+
+<template>
+  <NovuInbox />
+</template>
+```
+
+### Run your application
+
+Start the development server:
+
+<CodeGroup>
+```bash npm
+npm run dev
+```
+```bash pnpm
+pnpm dev
+```
+```bash yarn
+yarn dev
+```
+```bash bun
+bun dev
+```
+</CodeGroup>
+
+Once running, a **bell icon** appears in the top-left corner of the screen. Click it to open the notification inbox. There are no notifications yet — let's trigger one.
+
+### Trigger your first notification
+
+Create a workflow in the Novu dashboard and send a test notification:
+
+1. Go to your [Novu dashboard](https://dashboard.novu.co).
+2. Click **Workflows** in the sidebar.
+3. Click **Create Workflow** and enter a name (e.g., `Welcome Notification`).
+4. Click **Create Workflow** to save it.
+5. Click the **Add Step** icon in the workflow editor and select **In-App** as the step type.
+6. In the In-App template editor, set:
+   - **Subject**: `Welcome to Novu`
+   - **Body**: `Hello, world!`
+7. Close the editor, then click **Trigger**.
+8. Click **Test Workflow**.
+
+### View the notification in your app
+
+Switch back to your Vue app and click the bell icon.
+
+You should see the notification you just triggered. 🎉
+
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="JavaScript SDK Reference" icon="book" href="/sdks/javascript">
+    Explore the full `@novu/js` API for advanced inbox customization.
+  </Card>
+  <Card title="Build Workflows" icon="diagram-project" href="/workflows/create">
+    Design multi-channel notification workflows with delays, digests, and conditions.
+  </Card>
+  <Card title="Concepts: Subscribers" icon="users" href="/concepts/subscribers">
+    Learn how subscribers are identified and managed in Novu.
+  </Card>
+  <Card title="Topics & Fan-Out" icon="users" href="/concepts/topics">
+    Send notifications to groups of subscribers using topics.
+  </Card>
+</CardGroup>

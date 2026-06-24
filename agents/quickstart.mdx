@@ -1,0 +1,148 @@
+---
+title: "Novu Agents Quickstart: Your First AI Agent"
+sidebarTitle: "Quickstart"
+description: "Create your first Novu AI agent, connect it to Slack, and exchange messages in under 5 minutes. Choose between a managed agent or custom code agent."
+---
+
+This quickstart walks you through creating your first Novu AI agent and connecting it to Slack. Choose the path that matches how you want to build: use a **managed agent** powered by Claude for zero-code setup, or build a **custom code agent** with full control over your handler logic.
+
+<Note>
+  Novu Agents is currently in private beta. Contact [support@novu.co](mailto:support@novu.co) to request access.
+</Note>
+
+## Prerequisites
+
+- Node.js installed on your machine.
+- A [Novu account](https://connect.novu.co/) (you can create one during the setup flow).
+- A Slack workspace where you can install apps.
+
+## Path A — Managed agent (recommended for getting started fast)
+
+The managed agent path uses the Novu CLI to scaffold and configure a Claude-powered agent in minutes. No bridge server or handler code required.
+
+<Steps>
+  <Step title="Run the Novu CLI">
+    Open your terminal and run:
+
+    ```bash
+    npx novu connect
+    ```
+  </Step>
+  <Step title="Choose where your agent runs">
+    The CLI asks **Where do you want the agent to run?** Select **Demo credentials** to get started immediately, then press **Enter**.
+
+    <Tip>
+      You can switch to Claude Managed Agents or AWS Claude Managed Agents after the demo to use your own API credentials.
+    </Tip>
+  </Step>
+  <Step title="Describe your agent">
+    Type a description of what you want the agent to do and press **Enter**. For example:
+
+    ```
+    Create an engineering assistant agent that checks Linear and GitHub for open issues,
+    pending PR reviews, and review requests. It summarizes what needs attention, flags
+    blockers and stale tickets, and posts a short daily standup digest.
+    ```
+
+    Novu generates the agent for you — including its system prompt, tools, MCP servers, and skills — based on your description.
+  </Step>
+  <Step title="Review and create the agent">
+    The CLI shows the generated agent configuration. Review and adjust any of these fields before confirming:
+
+    - Name
+    - Identifier
+    - System prompt
+    - Tools
+    - MCP servers
+    - Skills
+
+    Select **Create this agent** and press **Enter**. To regenerate from a new description, select **Regenerate from description**.
+  </Step>
+  <Step title="Connect Slack">
+    The CLI prompts you to pick a channel. Select **Slack** and press **Enter**.
+
+    When asked for a Slack App Configuration Token:
+
+    1. Open [https://api.slack.com/apps](https://api.slack.com/apps).
+    2. Scroll to **App Configuration Tokens** and click **Generate Token**.
+    3. Copy the token — it starts with `xoxe.xoxp-`.
+    4. Paste it into the terminal and press **Enter**.
+
+    <Info>
+      Novu uses the token once to create the Slack app, then discards it. The token is not stored.
+    </Info>
+  </Step>
+  <Step title="Install the app in your workspace">
+    After pasting the token, the CLI prompts you to add the app to your Slack workspace. Press **Enter** and follow the link to install the bot.
+  </Step>
+  <Step title="Send your first message">
+    Open Slack. You'll see a direct message from your new agent. Reply to start a conversation.
+
+    Your agent is live and listening. You can also add it to any channel in your workspace.
+  </Step>
+</Steps>
+
+## Path B — Custom code agent
+
+The custom code path gives you full control over your agent's event handlers. Use any LLM, run any business logic, and reply using the Novu agent SDK.
+
+<Steps>
+  <Step title="Create the agent in the dashboard">
+    1. Go to the [Novu dashboard](https://dashboard.novu.co) and click **Agents** in the sidebar.
+    2. Click **Create agent**.
+    3. Fill in the **Agent name**, **Identifier**, and optional **Description**.
+    4. Click **Set up agent**.
+  </Step>
+  <Step title="Select a provider">
+    On the setup page, open **Select provider** and choose **Slack**. The dashboard unlocks the Slack configuration steps.
+  </Step>
+  <Step title="Create a Slack app">
+    1. Click **Slack App Configuration Token** to open the Slack API apps page.
+    2. Under **Your App Configuration Tokens**, click **Generate Token**.
+    3. Select your workspace and click **Generate**.
+    4. Copy the token, paste it into the Novu dashboard, and click **Create app**.
+
+    <Info>
+      The configuration token is used once to create your Slack app and is not stored by Novu.
+    </Info>
+  </Step>
+  <Step title="Install the app in your workspace">
+    Click **Install agent** (the label may include your agent name). Review permissions in Slack and click **Allow**. You'll receive a welcome message when installation completes.
+  </Step>
+  <Step title="Scaffold your agent project">
+    Copy the scaffold command from the dashboard and run it in your project directory:
+
+    ```bash
+    npx novu@latest init -t agent \
+      --secret-key=<NOVU_SECRET_KEY> \
+      --api-url=<NOVU_API_URL>
+    ```
+  </Step>
+  <Step title="Start your agent locally">
+    ```bash
+    npm run dev:novu
+    ```
+
+    This starts your app, opens a dev tunnel, and registers the bridge URL with Novu. When connected, you'll see another message from your agent in Slack.
+  </Step>
+  <Step title="Send a message">
+    Message your bot in Slack. Your `onMessage` handler runs and the reply appears in the thread. Edit files in `app/novu/agents/` to customize behavior.
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Managed Agent" icon="sparkles" href="/agents/managed-agent">
+    Configure connectors, MCP servers, skills, and system prompts for your managed agent.
+  </Card>
+  <Card title="Custom Code Agent" icon="code" href="/agents/custom-code-agent">
+    Explore handler types, the context object, replies, and signals.
+  </Card>
+  <Card title="Skills" icon="toolbox" href="/agents/skills">
+    Upload SKILL.md files to give your managed agent domain-specific instructions.
+  </Card>
+  <Card title="Conversations" icon="comments" href="/agents/conversations">
+    View and manage agent conversations from the Novu Connect dashboard.
+  </Card>
+</CardGroup>

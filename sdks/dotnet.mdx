@@ -1,0 +1,213 @@
+---
+title: ".NET Server SDK for Novu Notifications"
+sidebarTitle: ".NET"
+description: "Use the Novu .NET SDK to send notifications and manage subscribers from your C# or .NET application. Install via NuGet and authenticate with your secret key."
+---
+
+The Novu .NET SDK wraps the [Novu REST API](https://api.novu.co/v1) in a strongly-typed C# client. Use it to trigger notification workflows, manage subscribers, and integrate Novu into any .NET application — ASP.NET Core, Azure Functions, console apps, and more.
+
+<Info>
+  The source code for this SDK is available on [GitHub](https://github.com/novuhq/novu-csharp).
+</Info>
+
+## Installation
+
+Add the `Novu` NuGet package to your project:
+
+<CodeGroup>
+```bash dotnet CLI
+dotnet add package Novu
+```
+```xml PackageReference
+<PackageReference Include="Novu" Version="*" />
+```
+</CodeGroup>
+
+---
+
+## Initialization
+
+Instantiate `NovuSDK` with your secret key. Load the key from an environment variable or secrets manager — never hardcode it.
+
+```csharp
+using Novu;
+
+var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY")!);
+```
+
+<Warning>
+  Your secret key grants full API access. Use `dotnet user-secrets`, environment variables, or Azure Key Vault to store it securely.
+</Warning>
+
+For the EU region, pass the `serverUrl` parameter:
+
+```csharp
+using Novu;
+
+var sdk = new NovuSDK(
+    secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY")!,
+    serverUrl: "https://eu.api.novu.co"
+);
+```
+
+---
+
+## Trigger a Workflow
+
+Call `sdk.TriggerAsync()` to fire a notification workflow. Provide the `WorkflowId`, the `To` subscriber identifier, and any `Payload` variables your workflow templates reference.
+
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY")!);
+
+var res = await sdk.TriggerAsync(
+    triggerEventRequestDto: new TriggerEventRequestDto()
+    {
+        WorkflowId = "welcome-email",
+        To = To.CreateStr("user_123"),
+        Payload = new Dictionary<string, object>()
+        {
+            { "userName", "Alice" },
+            { "actionUrl", "https://app.example.com/get-started" },
+        },
+    }
+);
+
+Console.WriteLine($"Transaction ID: {res?.TriggerEventResponseDto?.TransactionId}");
+```
+
+### Trigger with a Full Subscriber Object
+
+Pass a full subscriber object to `To` to create or update the subscriber inline at trigger time.
+
+```csharp
+var res = await sdk.TriggerAsync(
+    triggerEventRequestDto: new TriggerEventRequestDto()
+    {
+        WorkflowId = "order-confirmation",
+        To = To.CreateSubscriberPayloadDto(new SubscriberPayloadDto()
+        {
+            SubscriberId = "user_123",
+            FirstName = "Alice",
+            LastName = "Smith",
+            Email = "alice@example.com",
+        }),
+        Payload = new Dictionary<string, object>()
+        {
+            { "orderId", "ORD-9876" },
+            { "total", "$49.99" },
+        },
+        Overrides = new Overrides(),
+    }
+);
+```
+
+### Trigger with Overrides
+
+```csharp
+var res = await sdk.TriggerAsync(
+    triggerEventRequestDto: new TriggerEventRequestDto()
+    {
+        WorkflowId = "invoice-notification",
+        To = To.CreateStr("user_123"),
+        Payload = new Dictionary<string, object>()
+        {
+            { "invoiceId", "INV-001" },
+        },
+        Overrides = new Overrides()
+        {
+            Email = new EmailOverrides()
+            {
+                Bcc = "billing-archive@company.com",
+            },
+        },
+    }
+);
+```
+
+---
+
+## Create a Subscriber
+
+Register a subscriber in Novu before sending them notifications.
+
+```csharp
+using Novu;
+using Novu.Models.Components;
+using System.Collections.Generic;
+
+var sdk = new NovuSDK(secretKey: Environment.GetEnvironmentVariable("NOVU_SECRET_KEY")!);
+
+var res = await sdk.Subscribers.CreateAsync(
+    createSubscriberRequestDto: new CreateSubscriberRequestDto()
+    {
+        SubscriberId = "user_123",
+        FirstName = "Alice",
+        LastName = "Smith",
+        Email = "alice@example.com",
+        Phone = "+1234567890",
+        Avatar = "https://example.com/avatars/alice.png",
+        Data = new Dictionary<string, object>()
+        {
+            { "plan", "pro" },
+            { "signedUpAt", "2024-01-15" },
+        },
+    }
+);
+
+Console.WriteLine($"Created subscriber: {res?.SubscriberResponseDto?.SubscriberId}");
+```
+
+---
+
+## Update a Subscriber
+
+Update an existing subscriber's profile using their `subscriberId`.
+
+```csharp
+var res = await sdk.Subscribers.UpdateAsync(
+    subscriberId: "user_123",
+    updateSubscriberRequestDto: new UpdateSubscriberRequestDto()
+    {
+        FirstName = "Alice",
+        LastName = "Johnson",
+        Email = "alice.johnson@example.com",
+        Data = new Dictionary<string, object>()
+        {
+            { "plan", "enterprise" },
+        },
+    }
+);
+```
+
+---
+
+## Error Handling
+
+All async methods can throw on network or API errors. Wrap calls in `try/catch` to handle failures gracefully in production code.
+
+```csharp
+try
+{
+    var res = await sdk.TriggerAsync(
+        triggerEventRequestDto: new TriggerEventRequestDto()
+        {
+            WorkflowId = "user-alert",
+            To = To.CreateStr("user_123"),
+            Payload = new Dictionary<string, object>()
+            {
+                { "message", "Something needs your attention." },
+            },
+        }
+    );
+
+    Console.WriteLine("Triggered successfully.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Failed to trigger notification: {ex.Message}");
+}
+```

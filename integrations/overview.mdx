@@ -1,0 +1,78 @@
+---
+title: "Integrations: Connect Email, SMS, Push, and Chat"
+sidebarTitle: "Overview"
+description: "Novu integrates with 50+ notification providers. Connect SendGrid, Twilio, FCM, Slack, and more through the Integration Store without changing your code."
+---
+
+The Integration Store is where you connect Novu to the third-party services that actually deliver your notifications. Add or swap providers at any time — your application code never needs to change because Novu's unified API handles the routing for you. This architecture also unlocks advanced reliability features like automatic provider fallbacks, so if one provider fails Novu can retry through another.
+
+## Provider vs. Integration
+
+Understanding the distinction between a provider and an integration helps you manage your channels effectively.
+
+- **Provider** — The third-party service responsible for sending the notification (e.g., Twilio, SendGrid, Slack). Every provider supported by Novu is identified by a `providerId`.
+- **Integration** — Your specific, configured instance of a provider. It combines the provider with your credentials and settings. When you create an integration you assign it a **name** and an **identifier**.
+
+<Note>
+The integration name can be changed after creation, but the `integrationIdentifier` is permanent. Keep this in mind when naming integrations — you will use the identifier in API calls to target a specific integration.
+</Note>
+
+Because an integration is separate from the provider, you can create two or more integrations for the same provider. For example, you might have two SendGrid integrations — one for transactional emails and one for marketing emails — and route messages to each independently using the `integrationIdentifier`.
+
+## Primary vs. Active Integrations
+
+Each Novu environment can have multiple active integrations for the same channel.
+
+- **Active integration** — Any integration that is switched on and ready to send. You can disable an active integration at any time to stop delivery through it.
+- **Primary integration** — The default integration Novu uses when you trigger a notification without specifying a particular integration.
+
+The meaning of "primary" differs by channel:
+
+| Channel | Primary behavior |
+|---------|-----------------|
+| **Email** | Only one primary integration at a time. All email notifications use it unless you override. |
+| **SMS** | Only one primary integration at a time. All SMS notifications use it unless you override. |
+| **Push** | No single primary — Novu delivers through **all** active push integrations in parallel. |
+| **Chat** | No single primary — Novu delivers through **all** active chat integrations in parallel. |
+
+<Tip>
+If you disable the current primary integration for Email or SMS, Novu automatically promotes another active integration to become the new primary. You can also manually re-assign the primary integration from the Integration Store at any time.
+</Tip>
+
+## Managing Integrations Across Environments
+
+Every integration is scoped to a specific environment. You must configure separate integrations for Development and Production even if both point to the same provider account.
+
+<Note>
+Environment isolation ensures test messages never reach production subscribers and lets you use different credentials or rate limits per environment.
+</Note>
+
+## Overriding Default Integration Settings
+
+The `overrides` object in a trigger call lets you access provider-specific features that are not exposed in the Novu workflow editor, or bypass the primary integration entirely for a single notification.
+
+Common override use cases:
+
+- Setting custom SendGrid headers
+- Using Slack Block Kit layouts
+- Defining platform-specific sounds for FCM push notifications
+- Forcing a specific `integrationIdentifier` for a single trigger
+
+## Integration Channels
+
+Select a channel below to see all supported providers and their setup guides.
+
+<CardGroup cols={2}>
+  <Card title="Email" icon="envelope" href="/integrations/email">
+    Configure SendGrid, Amazon SES, Mailgun, Postmark, Resend, and more.
+  </Card>
+  <Card title="SMS" icon="message-sms" href="/integrations/sms">
+    Connect Twilio, Amazon SNS, Vonage, Plivo, and other SMS providers.
+  </Card>
+  <Card title="Push" icon="bell" href="/integrations/push">
+    Send mobile and web push via FCM, APNs, OneSignal, Expo, and more.
+  </Card>
+  <Card title="Chat" icon="comments" href="/integrations/chat">
+    Route notifications to Slack, Microsoft Teams, Discord, WhatsApp, and more.
+  </Card>
+</CardGroup>

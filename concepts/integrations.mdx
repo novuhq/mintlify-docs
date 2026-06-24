@@ -1,0 +1,111 @@
+---
+title: "Integrations: Connect Your Notification Providers"
+sidebarTitle: "Integrations"
+description: "Connect Novu to email, SMS, push, and chat providers. Understand the difference between providers and integrations, and manage them per environment."
+---
+
+Integrations are the configured connections between Novu and the third-party services that physically deliver notifications. Whenever a workflow step executes a channel action — sending an email, delivering an SMS, posting to Slack — Novu routes that message through the integration you've configured for that channel.
+
+<Note>
+  The **in-app channel** is handled entirely by Novu and does **not** require a third-party integration. Only email, SMS, push, and chat channels need integrations.
+</Note>
+
+## Providers vs. integrations
+
+These two terms are related but distinct:
+
+- A **provider** is the third-party service responsible for delivering messages — for example, Twilio, SendGrid, or Slack.
+- An **integration** is your configured instance of a provider, including the credentials and settings specific to your account.
+
+You can have multiple integrations for the same provider. For example, you might use two different SendGrid accounts — one for your development environment and one for production — as two separate, independently managed integrations.
+
+## How integrations fit into the notification flow
+
+Integrations sit at the delivery end of the Novu pipeline. When a workflow step executes:
+
+1. Novu resolves the correct integration for the required channel.
+2. It applies any configuration — such as sender name or reply-to overrides.
+3. It hands off the message payload to the provider through the integration.
+
+If no active integration exists for the required channel when a step executes, **the step fails and no message is delivered**.
+
+<Warning>
+  Before activating a workflow with a channel step, make sure you have a configured and active integration for that channel in the current environment. Missing integrations are a common cause of failed workflow steps.
+</Warning>
+
+## Environment-scoped integrations
+
+Every integration belongs to one specific environment (development, production, or a custom environment). This scoping means:
+
+- Test messages in development never accidentally reach production users.
+- You can use different provider credentials, sender names, or API keys per environment.
+- Changing an integration in development has no effect on production.
+
+Configure separate integrations for each environment, even if they point to the same provider account.
+
+## Primary and active integrations
+
+<Tabs>
+  <Tab title="Email and SMS">
+    Each environment can have multiple active integrations per channel, but only **one primary integration** for email and SMS. The primary integration is the default route for messages on that channel unless explicitly overridden.
+
+    You can update which integration is marked as primary, or deactivate an integration entirely from the dashboard.
+  </Tab>
+  <Tab title="Push and Chat">
+    For push and chat channels, Novu uses **all active integrations in parallel**. This means a push notification can be delivered through both FCM and OneSignal simultaneously if both are configured and active.
+  </Tab>
+</Tabs>
+
+## Trigger overrides
+
+You can modify the default behavior of message delivery at trigger time using [Trigger Overrides](/platform/integrations/trigger-overrides). This lets you:
+
+- Override the sender name, title, or content for a specific notification.
+- Route a message through a different integration than the primary one.
+
+This works alongside your default integration configuration to give you fine-grained control over individual notifications.
+
+## Integration credentials
+
+When you add an integration, you provide the credentials needed to authenticate with the provider — API keys, tokens, sender addresses, or other provider-specific configuration. Novu encrypts all credentials at rest and manages them securely.
+
+## Supported channels and providers
+
+Novu supports a broad range of providers across all external channels:
+
+<CardGroup cols={2}>
+  <Card title="Email" icon="envelope" href="/integrations/email">
+    SendGrid, Mailgun, AWS SES, Postmark, Resend, SMTP, and more.
+  </Card>
+  <Card title="SMS" icon="mobile" href="/integrations/sms">
+    Twilio, Vonage, MessageBird, AWS SNS, Plivo, and more.
+  </Card>
+  <Card title="Push" icon="mobile-screen" href="/integrations/push">
+    Firebase Cloud Messaging (FCM), OneSignal, APNs, and more.
+  </Card>
+  <Card title="Chat" icon="comments" href="/integrations/chat">
+    Slack, Microsoft Teams, Discord, and more.
+  </Card>
+</CardGroup>
+
+## Add an integration from the dashboard
+
+<Steps>
+
+### Open the Integrations page
+
+Go to the [Novu dashboard](https://dashboard.novu.co) and click **Integrations** in the sidebar. Make sure you're in the correct environment before adding a new integration.
+
+### Choose a provider
+
+Click **Add a provider** and select the provider you want to configure from the list. Providers are organized by channel (email, SMS, push, chat).
+
+### Enter your credentials
+
+Fill in the required credentials for your provider — typically an API key, secret, or token from your provider account. Optionally configure sender details such as a from-address or sender name.
+
+### Save and activate
+
+Click **Create** to save the integration. Toggle it to **Active** to make it available for workflow steps. For email and SMS, mark it as the **Primary** integration if you want it to be the default route.
+
+</Steps>

@@ -1,0 +1,118 @@
+---
+title: "Digest Step: Aggregate Events into One Notification"
+sidebarTitle: "Digest"
+description: "Use the Novu digest step to batch multiple events into a single notification, like '5 new comments on your post'."
+---
+
+The Digest step is a powerful action step that controls how often downstream steps execute by batching multiple workflow trigger events into a single execution. Instead of notifying a user every time an event occurs, Digest collects events over a configurable time window, groups them per subscriber, and then lets the workflow continue once — delivering a single, consolidated notification.
+
+This eliminates notification fatigue and gives you a clean way to summarize activity. For example, instead of sending 12 separate emails for 12 new comments, you send one: "You have 12 new comments on your post."
+
+## How Digest Works
+
+When you add a Digest step to a workflow:
+
+1. Workflow trigger events are collected and held rather than flowing downstream immediately.
+2. Events are grouped per subscriber (and optionally by a custom grouping key).
+3. Once the digest window duration completes, the workflow continues exactly once.
+4. All aggregated events are available as context in downstream channel step templates.
+
+<Info>
+  Steps placed **before** the Digest step execute in real time on every trigger. Steps placed **after** the Digest step execute only once when the digest window closes.
+</Info>
+
+## When to Use Digest
+
+The Digest step is ideal for any scenario where you want to reduce notification volume or deliver periodic summaries:
+
+- **Activity summaries**: "You have 5 new comments on your post."
+- **Burst protection**: Prevent over-notifying users during high-frequency events (e.g., a CI/CD pipeline that emits many status events).
+- **Scheduled digests**: Deliver a daily or weekly summary of events instead of real-time alerts.
+- **Batch reminders**: Consolidate multiple pending tasks into a single reminder.
+
+## Add a Digest Step
+
+<Steps>
+  <Step title="Open the Workflow Editor">
+    Go to the [Novu Dashboard](https://dashboard.novu.co), navigate to **Workflows**, and open or create a workflow.
+  </Step>
+  <Step title="Add the Digest step">
+    Click the **+** icon at the position where you want to add the Digest step, then select **Digest** from the action steps panel.
+  </Step>
+  <Step title="Configure the digest window">
+    Set the digest duration — for example, 30 minutes, 2 hours, or 1 day. All events that arrive within this window will be batched together.
+  </Step>
+  <Step title="Add downstream channel steps">
+    Add the channel step (e.g., Email or In-App) after the Digest step. This step runs once per digest window with the aggregated data.
+  </Step>
+  <Step title="Use digest variables in your template">
+    In the channel step template editor, reference digest variables to personalize the content with aggregated event data (e.g., the total count of events).
+  </Step>
+</Steps>
+
+## Digest Variables in Templates
+
+After a Digest step, downstream channel steps have access to the aggregated event data. Use LiquidJS syntax in your templates to reference digest variables and build dynamic content.
+
+For example, in an email subject line:
+
+```liquid
+You have {{ steps.digest.events.length }} new notifications
+```
+
+Or in the body to loop through all digested events:
+
+```liquid
+{% for event in steps.digest.events %}
+  - {{ event.payload.message }}
+{% endfor %}
+```
+
+<Tip>
+  Refer to the [Personalize Content](https://docs.novu.co/platform/workflow/add-notification-content/personalize-content#digest-variables) documentation for a full list of available digest variables and usage examples.
+</Tip>
+
+## Digest vs. Real-Time Delivery
+
+| Scenario | Use Digest? |
+|---|---|
+| User receives one notification per comment | ❌ Use a standard in-app step |
+| User receives a summary of all comments every hour | ✅ Use Digest with a 1-hour window |
+| Send an email for every failed payment | ❌ Use a standard email step |
+| Send a daily report of all failed payments | ✅ Use Digest with a 24-hour window |
+| Alert the user the moment they receive a message | ❌ Use a standard channel step |
+| Group message alerts into a 5-minute batch | ✅ Use Digest with a 5-minute window |
+
+## Combining Digest with Other Steps
+
+You can place steps both before and after the Digest step in the same workflow:
+
+```
+Trigger → In-App (immediate) → Digest (1 hour) → Email (batched summary)
+```
+
+In this pattern:
+- The **In-App** step fires immediately on every trigger, giving the user real-time feedback.
+- The **Digest** step collects events over one hour.
+- The **Email** step fires once with a summary of all events from the digest window.
+
+<Note>
+  For full configuration options — including digest window types, grouping keys, and schedule-based digests — refer to the [Configure Digest Step](https://docs.novu.co/platform/workflow/add-and-configure-steps/configure-action-steps/digest) documentation.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Delay Step" icon="clock" href="/workflows/delay">
+    Pause workflow execution for a fixed duration before the next step runs.
+  </Card>
+  <Card title="Workflow Steps" icon="list" href="/workflows/steps">
+    Learn about all available step types — channel and action.
+  </Card>
+  <Card title="Trigger a Workflow" icon="play" href="/workflows/triggers">
+    Send a notification by triggering a workflow via the API or SDK.
+  </Card>
+  <Card title="Personalize Content" href="https://docs.novu.co/platform/workflow/add-notification-content/personalize-content">
+    Use digest variables to build dynamic notification content.
+  </Card>
+</CardGroup>

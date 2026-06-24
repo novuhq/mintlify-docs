@@ -1,0 +1,98 @@
+---
+title: "Novu Inbox: Real-Time In-App Notifications"
+sidebarTitle: "Overview"
+description: "The Novu Inbox is a prebuilt, customizable UI component for real-time in-app notifications. Embed it in any React or Next.js app."
+---
+
+The Novu Inbox is a prebuilt, ready-to-use, and fully customizable UI component for delivering real-time in-app notifications. It gives your users a centralized place to view and manage their notifications — complete with unread counts, preferences, and real-time updates — all with just a few lines of code.
+
+<CardGroup cols={2}>
+  <Card title="Plug-and-Play" icon="bolt">
+    Drop the `<Inbox />` component into your app, configure it with your application identifier and subscriber ID, and you're live.
+  </Card>
+  <Card title="Build Your Own" icon="wrench">
+    Use `@novu/react` hooks or the `@novu/js` SDK to build a fully custom notification UI without any default styles.
+  </Card>
+  <Card title="Real-Time Updates" icon="signal">
+    Notifications and unread counts sync automatically over WebSocket — no polling required.
+  </Card>
+  <Card title="Highly Customizable" icon="paintbrush">
+    Override styles, replace icons, and theme every UI element using the `appearance` prop and CSS variables.
+  </Card>
+</CardGroup>
+
+## How It Works
+
+At a high level, the Inbox abstracts away the complexity of building a notification center.
+
+1. When you drop the Inbox component into your application, it securely connects to Novu's services.
+2. It automatically fetches user notifications and manages the real-time unread count displayed on the bell icon.
+3. When a user clicks the bell, it presents the list of notifications and user preferences.
+4. All user interactions — such as marking a notification as read or changing a preference — are automatically synchronized with the Novu backend in real-time.
+
+## Composable Architecture
+
+The Novu Inbox is built with a composable architecture. Rather than a single monolithic component, it is composed of individual sub-components you can use independently to build popular inbox layouts.
+
+<CardGroup cols={2}>
+  <Card title="Bell" icon="bell" href="/inbox/customization">
+    Displays the bell icon and triggers the notification popover when clicked. Use it as a standalone trigger to build your own notification center layout.
+  </Card>
+  <Card title="Notifications" icon="list" href="/inbox/customization">
+    Renders the core notification feed — including the header, scrollable notification list, and footer — without the bell trigger.
+  </Card>
+  <Card title="InboxContent" icon="inbox" href="/inbox/customization">
+    Renders everything the `Notifications` component does, plus the Preferences page, giving users full control over their settings.
+  </Card>
+  <Card title="Preferences" icon="sliders" href="/inbox/preferences">
+    Displays the preferences panel anywhere in your application — for example, on a dedicated settings page — without requiring the full Inbox component.
+  </Card>
+</CardGroup>
+
+By composing these individual components, you can create custom inbox layouts that fit perfectly within your application's design system.
+
+<Tip>
+  Novu provides a [free Figma file](https://www.figma.com/community/file/1425407348374863860) with all Inbox design assets. Copy it into your account to start designing your notification experience.
+</Tip>
+
+## Integration Approaches
+
+### Plug-and-Play
+
+This is the fastest way to integrate the Novu Inbox. The `<Inbox />` component encapsulates all the UI and logic. Drop it into your application, configure it with the required props, and you're done.
+
+```jsx
+import { Inbox } from '@novu/nextjs';
+
+export function NotificationCenter() {
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="SUBSCRIBER_ID"
+    />
+  );
+}
+```
+
+### Build Your Own
+
+For maximum flexibility and complete control over the look and feel, use the [`@novu/react` SDK](https://docs.novu.co/platform/sdks/react) for React hooks or the [`@novu/js` SDK](https://docs.novu.co/platform/sdks/javascript) for framework-agnostic JavaScript. You get the power of Novu's notification engine while building a UI that perfectly matches your design system.
+
+See [Headless Mode](/inbox/headless) for detailed guidance.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Set Up the Inbox" icon="rocket" href="/inbox/setup">
+    Install the package and embed the Inbox component in your Next.js or React application.
+  </Card>
+  <Card title="Customize Appearance" icon="paintbrush" href="/inbox/customization">
+    Theme the Inbox with custom colors, fonts, and CSS class overrides.
+  </Card>
+  <Card title="Configure Preferences" icon="sliders" href="/inbox/preferences">
+    Let users control which notifications they receive and on which channels.
+  </Card>
+  <Card title="Headless Mode" icon="code" href="/inbox/headless">
+    Build a fully custom notification UI using Novu's React hooks.
+  </Card>
+</CardGroup>

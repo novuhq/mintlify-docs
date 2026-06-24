@@ -1,0 +1,233 @@
+---
+title: "TypeScript Server SDK: @novu/api"
+sidebarTitle: "TypeScript"
+description: "Use the @novu/api TypeScript SDK to trigger notifications, manage subscribers, and interact with the Novu REST API from your Node.js or TypeScript backend."
+---
+
+The `@novu/api` package is Novu's official TypeScript/JavaScript server SDK. It wraps the [Novu REST API](https://api.novu.co/v1) with a fully-typed client, giving you auto-complete for every method, request body, and response shape. Use it in Node.js, Bun, Deno, Cloudflare Workers, or any TypeScript backend.
+
+<Info>
+  The source code for this SDK is available on [GitHub](https://github.com/novuhq/novu-ts).
+</Info>
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm add @novu/api
+```
+```bash yarn
+yarn add @novu/api
+```
+```bash pnpm
+pnpm add @novu/api
+```
+```bash bun
+bun add @novu/api
+```
+</CodeGroup>
+
+---
+
+## Initialization
+
+Import `Novu` and instantiate it with your secret key. Store the secret key in an environment variable — never hardcode it in source files.
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY! });
+```
+
+<Warning>
+  Your secret key grants full API access. Always load it from an environment variable and ensure it is never exposed to the client side.
+</Warning>
+
+For the EU region, pass the `serverURL` option:
+
+```typescript
+const novu = new Novu({
+  secretKey: process.env.NOVU_SECRET_KEY!,
+  serverURL: "https://eu.api.novu.co",
+});
+```
+
+---
+
+## Trigger a Workflow
+
+Call `novu.trigger()` to send a notification to a subscriber by firing one of your configured workflows. Pass the `workflowId`, the `to` subscriber details, and any `payload` variables your workflow templates use.
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY! });
+
+async function sendWelcomeNotification() {
+  const result = await novu.trigger({
+    workflowId: "welcome-email",
+    to: {
+      subscriberId: "user_123",
+      firstName: "Alice",
+      lastName: "Smith",
+      email: "alice@example.com",
+      phone: "+1234567890",
+    },
+    payload: {
+      userName: "Alice",
+      actionUrl: "https://app.example.com/get-started",
+    },
+  });
+
+  console.log(result);
+}
+
+sendWelcomeNotification();
+```
+
+### Trigger with Overrides
+
+Use `overrides` to customize channel-specific behavior at send time, such as adding a BCC address to an email.
+
+```typescript
+await novu.trigger({
+  workflowId: "order-confirmation",
+  to: {
+    subscriberId: "user_123",
+    email: "alice@example.com",
+  },
+  payload: {
+    orderId: "ORD-9876",
+    total: "$49.99",
+  },
+  overrides: {
+    email: {
+      bcc: "orders-archive@company.com",
+    },
+  },
+});
+```
+
+---
+
+## Create a Subscriber
+
+Register a new subscriber in Novu before (or at the time of) sending them their first notification. Subscribers store profile data that notification templates can reference.
+
+```typescript
+const subscriber = await novu.subscribers.create({
+  subscriberId: "user_123",
+  firstName: "Alice",
+  lastName: "Smith",
+  email: "alice@example.com",
+  phone: "+1234567890",
+  avatar: "https://example.com/avatars/alice.png",
+  data: {
+    plan: "pro",
+    signedUpAt: "2024-01-15",
+  },
+});
+
+console.log(subscriber);
+```
+
+---
+
+## Bulk Create Subscribers
+
+Create up to 500 subscribers in a single API call using `novu.subscribers.bulkCreate()`.
+
+```typescript
+const result = await novu.subscribers.bulkCreate({
+  subscribers: [
+    {
+      subscriberId: "user_001",
+      firstName: "Alice",
+      email: "alice@example.com",
+    },
+    {
+      subscriberId: "user_002",
+      firstName: "Bob",
+      email: "bob@example.com",
+    },
+    {
+      subscriberId: "user_003",
+      firstName: "Carol",
+      email: "carol@example.com",
+    },
+  ],
+});
+
+console.log(result);
+```
+
+---
+
+## Trigger for a Topic
+
+Send a notification to all subscribers of a topic using `type: "Topic"` in the `to` field. Topics let you broadcast to groups without managing individual subscriber lists at trigger time.
+
+```typescript
+await novu.trigger({
+  workflowId: "product-announcement",
+  to: [
+    {
+      type: "Topic",
+      topicKey: "newsletter-subscribers",
+    },
+  ],
+  payload: {
+    announcementTitle: "Exciting new features are here!",
+    releaseUrl: "https://example.com/changelog",
+  },
+});
+```
+
+---
+
+## Custom HTTP Headers
+
+Add custom headers to every outgoing request by attaching a `beforeRequest` hook to the underlying `HTTPClient`.
+
+```typescript
+import { Novu } from "@novu/api";
+import { HTTPClient } from "@novu/api/lib/http";
+
+const httpClient = new HTTPClient();
+
+httpClient.addHook("beforeRequest", (request) => {
+  const nextRequest = new Request(request);
+  nextRequest.headers.set("x-tenant-id", "acme-corp");
+  return nextRequest;
+});
+
+const novu = new Novu({
+  httpClient,
+  secretKey: process.env.NOVU_SECRET_KEY!,
+});
+```
+
+---
+
+## Error Handling
+
+All SDK methods return promises. Wrap calls in `try/catch` to handle API errors gracefully.
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY! });
+
+async function notifyUser(subscriberId: string) {
+  try {
+    const result = await novu.trigger({
+      workflowId: "user-alert",
+      to: { subscriberId },
+      payload: { message: "Something needs your attention." },
+    });
+    console.log("Triggered:", result);
+  } catch (error) {
+    console.error("Failed to trigger notification:", error);
+  }
+}
+```

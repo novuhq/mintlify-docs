@@ -1,0 +1,99 @@
+---
+title: "Manage Novu Environments for Dev and Production"
+sidebarTitle: "Environments"
+description: "Novu environments isolate your development and production workflows, subscribers, and integrations. Each has its own API keys and configuration."
+---
+
+Novu uses environments to keep your work-in-progress completely separated from what your users experience in production. Build and iterate on workflows in Development, then publish them to Production when they are ready. Each environment has its own API keys, integrations, and subscriber data — so test runs never accidentally reach real users.
+
+## Types of Environments
+
+When you create a Novu account you get two environments by default:
+
+| Environment | Purpose |
+|-------------|---------|
+| **Development** | Build, iterate, and test workflows. This is the only environment where you can create or edit workflows, layouts, and translations. |
+| **Production** | Live environment serving real subscribers. Workflows here are view-only — you promote changes from Development rather than editing them directly. |
+| **Custom** *(Team & Enterprise)* | Create additional environments to match your release process, such as staging or QA. |
+
+<Note>
+Custom environments are available on [Team and Enterprise plans](https://novu.co/pricing) only.
+</Note>
+
+## What Is Isolated Per Environment?
+
+Each Novu environment maintains completely separate copies of the following resources:
+
+| Resource | Isolated per environment? |
+|----------|--------------------------|
+| Activity feed | ✅ Yes |
+| API keys (application identifier + secret key) | ✅ Yes |
+| Integrations (provider credentials) | ✅ Yes |
+| Subscribers | ✅ Yes |
+| Topics | ✅ Yes |
+| Webhooks | ✅ Yes |
+| Workflows | 🔄 Shared origin in Dev, published to others |
+| Layouts | 🔄 Shared origin in Dev, published to others |
+| Translations | 🔄 Shared origin in Dev, published to others |
+
+Workflows, layouts, and translations are authored in Development and then **published** to other environments. Everything else is fully environment-specific.
+
+## Switching Environments
+
+Select the active environment from the environment switcher in the top navigation bar of the Novu dashboard. All pages — integrations, workflows, activity, API keys — reflect the selected environment.
+
+<Tip>
+Color-code your environments during setup to make it immediately clear which environment you are working in. Assign a distinct color (e.g., green for production, blue for development) when creating a custom environment.
+</Tip>
+
+## Creating a Custom Environment
+
+<Steps>
+  <Step title="Open the Environments page">
+    Log in to the [Novu dashboard](https://dashboard.novu.co) and navigate to **Settings** → **[Environments](https://dashboard.novu.co/environments)**.
+  </Step>
+  <Step title="Click Create Environment">
+    Click the **Create environment** button. A configuration panel appears.
+  </Step>
+  <Step title="Name and color your environment">
+    Enter a name for the environment (e.g., `Staging`) and select a unique color to distinguish it from others in the environment switcher.
+  </Step>
+  <Step title="Save">
+    Click **Create environment**. The new environment appears in the list immediately, ready to use.
+  </Step>
+</Steps>
+
+## Publishing Changes to Other Environments
+
+All workflow, layout, and translation changes must originate in the Development environment. Once you are satisfied with a change, publish it to Production (or another environment) using Novu's publish mechanism.
+
+<Steps>
+  <Step title="Switch to the Development environment">
+    Use the environment switcher to make sure you are in **Development** before publishing.
+  </Step>
+  <Step title="Click Publish Changes">
+    Click the **Publish changes** button in the top navigation bar. A list of available target environments appears.
+  </Step>
+  <Step title="Select the target environment">
+    Choose the environment you want to publish to (e.g., **Production**).
+  </Step>
+  <Step title="Select workflows to publish">
+    A modal lists all workflows that have unpublished changes. Select the checkboxes next to the workflows you want to promote.
+  </Step>
+  <Step title="Confirm the publish">
+    Click **Publish**. The selected workflows, along with their associated layouts and translations, are deployed to the target environment.
+  </Step>
+</Steps>
+
+<Warning>
+The Production environment is view-only. You cannot edit workflows, layouts, or translations directly in Production. All changes must be made in Development and promoted via the publish flow.
+</Warning>
+
+## Environment Credentials
+
+Each environment has two unique identifiers. Configure your application to use the credentials matching the currently active environment:
+
+- **Application Identifier** — Public. Used to initialize the Inbox component in your frontend. Safe to expose in client-side code.
+- **API Secret Key** — Private. Used for server-side API calls. Never expose this in frontend code or public repositories.
+
+Find both on the **[API Keys](https://dashboard.novu.co/settings/api-keys)** page after switching to the desired environment.

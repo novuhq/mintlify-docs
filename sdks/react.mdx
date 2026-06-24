@@ -1,0 +1,458 @@
+---
+title: "@novu/react SDK: Components and Hooks"
+sidebarTitle: "React"
+description: "The @novu/react package provides the Inbox, Bell, Notifications, and Subscription components plus hooks for building custom notification UIs in React."
+---
+
+The `@novu/react` package is Novu's official React SDK. It gives you pre-built, fully customizable components — `Inbox`, `Bell`, `Notifications`, `InboxContent`, and `Subscription` — as well as a `NovuProvider` context that powers subscription management hooks. Use it to drop a complete notification experience into any React or Next.js application in minutes.
+
+<Note>
+  If you are using Next.js, import from `@novu/nextjs` instead of `@novu/react`. The API is identical — `@novu/nextjs` simply adds Next.js-specific export optimizations.
+</Note>
+
+## Installation
+
+Install the package using your preferred package manager:
+
+<CodeGroup>
+```bash npm
+npm install @novu/react
+```
+```bash yarn
+yarn add @novu/react
+```
+```bash pnpm
+pnpm add @novu/react
+```
+```bash bun
+bun add @novu/react
+```
+</CodeGroup>
+
+## NovuProvider
+
+Before using any component or hook, wrap your application (or the subtree where you need notifications) in `NovuProvider`. It initializes the Novu client and makes it available to all child components.
+
+```tsx
+import { NovuProvider } from '@novu/react';
+
+function App() {
+  return (
+    <NovuProvider
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      {/* Your app components */}
+    </NovuProvider>
+  );
+}
+```
+
+<Tip>
+  Find your `applicationIdentifier` in the [Novu Dashboard API keys page](https://dashboard.novu.co/api-keys). The `subscriber` value is the unique identifier for the current user in your system.
+</Tip>
+
+### NovuProvider Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `subscriber` | `string \| Subscriber` | The subscriber ID or subscriber object for the current user |
+| `subscriberId` | `string` | Alternative to `subscriber` — pass the subscriber ID directly |
+| `applicationIdentifier` | `string` | Your Novu application identifier |
+| `subscriberHash` | `string` | HMAC hash for subscriber authentication (recommended for production) |
+| `apiUrl` | `string` | Override the default API URL (for EU region or self-hosted) |
+| `socketUrl` | `string` | Override the default WebSocket URL |
+| `contextHash` | `string` | Hash for context-based HMAC encryption |
+| `context` | `object` | Additional context data passed to the Novu client |
+| `children` | `ReactNode` | Child components that gain access to the Novu context |
+
+---
+
+## Components
+
+The `@novu/react` package ships five components for building notification UIs at different levels of abstraction.
+
+<CardGroup cols={2}>
+  <Card title="Inbox" icon="inbox">
+    A full-featured notification inbox with a bell trigger, popover panel, notification list, and preferences — all in one.
+  </Card>
+  <Card title="Bell" icon="bell">
+    A standalone bell icon that displays the unread count. Use it alongside custom popover or drawer logic.
+  </Card>
+  <Card title="Notifications" icon="list">
+    A headless notification list component you can embed anywhere in your layout.
+  </Card>
+  <Card title="InboxContent" icon="layout-panel-left">
+    The inner content of the inbox panel, detached from the popover trigger. Ideal for sidebars or custom layouts.
+  </Card>
+</CardGroup>
+
+---
+
+## Inbox
+
+The `Inbox` component is the quickest way to add a full notification experience. It renders a bell button that opens a popover panel containing the notification list and user preferences.
+
+### Usage
+
+```tsx
+import { Inbox } from "@novu/react";
+
+function NovuInbox() {
+  return (
+    <Inbox
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+      subscriber={{
+        subscriberId: "SUBSCRIBER_ID",
+      }}
+      apiUrl="https://api.novu.co"
+      socketUrl="https://socket.novu.co"
+      placement="right"
+      placementOffset={10}
+      onNotificationClick={(notification) => {
+        console.log(notification);
+      }}
+    />
+  );
+}
+```
+
+<Note>
+  When you use `Inbox` with `applicationIdentifier` and `subscriber` directly as props, you do not need a separate `NovuProvider` wrapper — `Inbox` sets up its own context internally. If you wrap the tree in `NovuProvider`, omit those props from `Inbox`.
+</Note>
+
+### Inbox Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `applicationIdentifier` | `string` | Your Novu application identifier |
+| `subscriber` | `string \| Subscriber` | The current subscriber |
+| `subscriberId` | `string` | Alternative subscriber ID prop |
+| `appearance` | `ReactInboxAppearance` | Theme, variable, and element style overrides |
+| `localization` | `InboxLocalization` | Override UI strings for internationalization |
+| `tabs` | `Tab[]` | Custom tab definitions for filtering notifications |
+| `routerPush` | `RouterPush` | Navigation handler for notification redirect URLs |
+| `defaultSchedule` | `DefaultSchedule` | Default delivery schedule settings |
+| `preferencesSort` | `PreferencesSort` | Sort order for the preferences list |
+| `preferenceGroups` | `PreferenceGroups` | Grouping configuration for preferences |
+| `preferencesFilter` | `PreferencesFilter` | Filter applied to the preferences list |
+| `socketOptions` | `NovuSocketOptions` | Advanced WebSocket configuration |
+| `socketUrl` | `string` | WebSocket server URL |
+| `backendUrl` | `string` | Backend API URL override |
+| `subscriberHash` | `string` | HMAC hash for the subscriber |
+| `contextHash` | `string` | HMAC hash for the context |
+| `context` | `Partial<Record<string, ContextValue>>` | Additional context values |
+
+### Appearance Configuration
+
+Customize the visual style of the `Inbox` by passing an `appearance` prop. It accepts a `baseTheme`, CSS variable overrides, and fine-grained element style overrides.
+
+```tsx
+<Inbox
+  applicationIdentifier="APPLICATION_IDENTIFIER"
+  subscriber="SUBSCRIBER_ID"
+  appearance={{
+    variables: {
+      colorPrimary: "#0369a1",
+      colorBackground: "#ffffff",
+      colorForeground: "#111827",
+      borderRadius: "0.5rem",
+    },
+    animations: true,
+  }}
+/>
+```
+
+#### Appearance Variables
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `colorPrimary` | `string` | Primary brand color |
+| `colorPrimaryForeground` | `string` | Text color on primary backgrounds |
+| `colorBackground` | `string` | Panel background color |
+| `colorForeground` | `string` | Default text color |
+| `colorSecondary` | `string` | Secondary color |
+| `colorSecondaryForeground` | `string` | Text color on secondary backgrounds |
+| `colorCounter` | `string` | Unread count badge background |
+| `colorCounterForeground` | `string` | Unread count badge text color |
+| `colorNeutral` | `string` | Neutral/muted color |
+| `colorShadow` | `string` | Shadow color for the popover |
+| `colorRing` | `string` | Focus ring color |
+| `borderRadius` | `string` | Global border radius |
+| `fontSize` | `string` | Base font size |
+| `colorSeverityHigh` | `string` | Color for high-severity notifications |
+| `colorSeverityMedium` | `string` | Color for medium-severity notifications |
+| `colorSeverityLow` | `string` | Color for low-severity notifications |
+
+---
+
+## Bell
+
+The `Bell` component renders a notification bell icon with an unread count badge. Use it when you want to control the popover yourself (for example, to open a custom drawer or sidebar).
+
+### Usage
+
+```tsx
+import { Bell } from "@novu/react";
+import { BellIcon } from "lucide-react";
+
+function NotificationBell() {
+  return (
+    <Bell
+      renderBell={(unreadCount) => (
+        <div className="relative">
+          <BellIcon className="h-6 w-6" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+              {unreadCount}
+            </span>
+          )}
+        </div>
+      )}
+    />
+  );
+}
+```
+
+### Bell Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `renderBell` | `BellRenderer` | Render function that receives `unreadCount` and returns a React node |
+
+---
+
+## Notifications
+
+The `Notifications` component renders a flat list of notifications. It accepts render props for customizing every part of each notification item — body, subject, avatar, and actions.
+
+### Usage
+
+```tsx
+import { Notifications } from "@novu/react";
+
+function NotificationList() {
+  return (
+    <Notifications
+      onNotificationClick={(notification) => {
+        console.log(notification);
+      }}
+      renderNotification={({ body, createdAt }) => (
+        <div className="flex gap-2 p-2">
+          <div className="flex-1">
+            <p>{body}</p>
+            <time className="text-sm text-gray-500">
+              {new Date(createdAt).toLocaleDateString()}
+            </time>
+          </div>
+        </div>
+      )}
+    />
+  );
+}
+```
+
+### Notifications Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `renderNotification` | `NotificationsRenderer` | Custom renderer for each notification row |
+| `renderAvatar` | `AvatarRenderer` | Custom renderer for the notification avatar |
+| `renderSubject` | `SubjectRenderer` | Custom renderer for the notification subject line |
+| `renderBody` | `BodyRenderer` | Custom renderer for the notification body |
+| `renderDefaultActions` | `DefaultActionsRenderer` | Custom renderer for the default action buttons |
+| `renderCustomActions` | `CustomActionsRenderer` | Custom renderer for custom action buttons |
+| `onNotificationClick` | `NotificationClickHandler` | Callback when a notification item is clicked |
+| `onPrimaryActionClick` | `NotificationActionClickHandler` | Callback when the primary action button is clicked |
+| `onSecondaryActionClick` | `NotificationActionClickHandler` | Callback when the secondary action button is clicked |
+
+---
+
+## InboxContent
+
+`InboxContent` renders the full inbox panel UI — including the header, notification list, and preferences — without the bell trigger or popover wrapper. Embed it in a sidebar, sheet, or any custom container.
+
+### Usage
+
+```tsx
+import { InboxContent } from "@novu/react";
+
+function CustomInbox() {
+  return (
+    <div className="custom-inbox-wrapper">
+      <InboxContent
+        onNotificationClick={(notification) => {
+          console.log(notification);
+        }}
+        onPrimaryActionClick={(notification) => {
+          console.log(notification);
+        }}
+        hideNav={false}
+        renderNotification={({ body, createdAt }) => (
+          <div className="notification-item">
+            <p>{body}</p>
+            <time>{new Date(createdAt).toLocaleDateString()}</time>
+          </div>
+        )}
+      />
+    </div>
+  );
+}
+```
+
+### InboxContent Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `renderNotification` | `NotificationsRenderer` | Custom renderer for each notification row |
+| `renderAvatar` | `AvatarRenderer` | Custom renderer for the avatar |
+| `renderSubject` | `SubjectRenderer` | Custom renderer for the subject line |
+| `renderBody` | `BodyRenderer` | Custom renderer for the body |
+| `renderDefaultActions` | `DefaultActionsRenderer` | Custom renderer for default action buttons |
+| `renderCustomActions` | `CustomActionsRenderer` | Custom renderer for custom action buttons |
+| `hideNav` | `boolean` | Hide the top navigation bar of the inbox panel |
+| `initialPage` | `InboxPage` | The page to show on first render |
+| `onNotificationClick` | `NotificationClickHandler` | Click handler for notification items |
+| `onPrimaryActionClick` | `NotificationActionClickHandler` | Click handler for the primary action |
+| `onSecondaryActionClick` | `NotificationActionClickHandler` | Click handler for the secondary action |
+
+---
+
+## Subscription
+
+The `Subscription` component lets subscribers manage their opt-in preferences for a specific topic. It renders a button that opens a popover where the user can toggle which workflows within the topic they receive.
+
+### Usage
+
+```tsx
+import { NovuProvider, Subscription } from "@novu/react";
+
+function SubscriptionManager() {
+  return (
+    <NovuProvider
+      subscriber="SUBSCRIBER_ID"
+      applicationIdentifier="APPLICATION_IDENTIFIER"
+    >
+      <Subscription
+        topicKey="product-updates"
+        identifier="user-preference-1"
+        preferences={["workflow-one", "workflow-two"]}
+        appearance={{
+          baseTheme: isDark ? subscriptionDarkTheme : undefined,
+        }}
+      />
+    </NovuProvider>
+  );
+}
+```
+
+### Subscription Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `topicKey` | `string` | The topic key to subscribe to |
+| `identifier` | `string` | A unique identifier for this subscription instance |
+| `preferences` | `UIPreference[]` | Workflow IDs to show as preference toggles |
+| `appearance` | `ReactSubscriptionAppearance` | Theme and element style overrides |
+| `localization` | `SubscriptionLocalization` | Override UI strings |
+| `placement` | `Placement` | Popover placement relative to the trigger button |
+| `placementOffset` | `OffsetOptions` | Offset in pixels from the trigger |
+| `open` | `boolean` | Controlled open state for the popover |
+| `renderPreferences` | `PreferencesRenderer` | Custom renderer for the preferences list |
+| `container` | `string \| Node \| null` | Portal container for the popover |
+| `children` | `ReactNode` | Custom trigger element |
+
+---
+
+## Subscription Hooks
+
+Use these hooks to build completely custom subscription management UI without the pre-built `Subscription` component.
+
+<Tabs>
+  <Tab title="useSubscriptions">
+    Fetches all subscriptions for a specific topic.
+
+    ```tsx
+    import { useSubscriptions } from "@novu/react";
+
+    function SubscriptionList() {
+      const { subscriptions, isLoading } = useSubscriptions({
+        topicKey: "project-123",
+      });
+
+      if (isLoading) return <p>Loading...</p>;
+
+      return (
+        <ul>
+          {subscriptions.map((sub) => (
+            <li key={sub.id}>{sub.identifier}</li>
+          ))}
+        </ul>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="useSubscription">
+    Fetches a single subscription by topic and identifier.
+
+    ```tsx
+    import { useSubscription } from "@novu/react";
+
+    const { subscription, isLoading } = useSubscription({
+      topicKey: "project-123",
+      identifier: "user-preference-1",
+    });
+    ```
+  </Tab>
+  <Tab title="useCreateSubscription">
+    Creates a new subscription to a topic.
+
+    ```tsx
+    import { useCreateSubscription } from "@novu/react";
+
+    const { create, isCreating } = useCreateSubscription();
+
+    await create({
+      topicKey: "project-123",
+      identifier: "project-updates",
+    });
+    ```
+  </Tab>
+  <Tab title="useUpdateSubscription">
+    Updates an existing subscription's preferences.
+
+    ```tsx
+    import { useUpdateSubscription } from "@novu/react";
+
+    const { update, isUpdating } = useUpdateSubscription();
+
+    const handleToggle = async () => {
+      await update({
+        topicKey: "project-123",
+        subscriptionId: "sub-id-123",
+        preferences: [{ workflowId: "workflow-one", enabled: false }],
+      });
+    };
+    ```
+  </Tab>
+  <Tab title="useRemoveSubscription">
+    Removes a subscription from a topic.
+
+    ```tsx
+    import { useRemoveSubscription } from "@novu/react";
+
+    function UnsubscribeButton({ subscriptionId }) {
+      const { remove, isRemoving } = useRemoveSubscription();
+
+      return (
+        <button
+          onClick={() => remove({ subscriptionId, topicKey: "project-123" })}
+          disabled={isRemoving}
+        >
+          {isRemoving ? "Removing..." : "Unsubscribe"}
+        </button>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>

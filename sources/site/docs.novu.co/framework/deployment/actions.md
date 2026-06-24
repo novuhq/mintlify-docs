@@ -1,0 +1,48 @@
+# Source: https://docs.novu.co/framework/deployment/actions
+
+# GitHub Actions
+
+Learn how to deploy your Novu workflows using the built-in GitHub Action for CI/CD automation.
+
+Learn how to deploy your Novu workflows with our built-in GitHub Action command:
+
+```
+name: Deploy workflow State to Novu
+ 
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+ 
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # https://github.com/novuhq/actions-novu-sync
+      - name: Sync State to Novu
+        uses: novuhq/actions-novu-sync@v2
+        with:
+          # The secret key used to authenticate with Novu Cloud
+          # To get the secret key, go to https://web.novu.co/api-keys.
+          # Required.
+          secret-key: ${{ secrets.NOVU_SECRET_KEY }}
+ 
+          # The publicly available endpoint hosting the bridge application
+          # where notification entities (eg. workflows, topics) are defined.
+          # Required.
+          bridge-url: ${{ secrets.NOVU_BRIDGE_URL }}
+ 
+          # The Novu Cloud API URL to sync with.
+          # Optional.
+          # Defaults to https://api.novu.co
+          api-url: https://api.novu.co
+```
+
+[CLI\\ \\ Learn how to use the Novu CLI to synchronize your workflows to Novu Cloud for production deployment.](https://docs.novu.co/framework/deployment/cli)
+
+### On this page
+
+No Headings
+
+Copy page as markdown[Edit this page on GitHub](https://github.com/novuhq/docs/edit/main/content/docs/framework/deployment/actions.mdx)Open in ChatGPTOpen in Claude

@@ -1,0 +1,139 @@
+---
+title: "Workflow Notification Preferences"
+sidebarTitle: "Preferences"
+description: "Configure default channel preferences for each Novu workflow and allow subscribers to override them through the Inbox preferences panel."
+---
+
+Novu provides a layered preferences system that gives you control over default notification behavior at the workflow level, while giving subscribers the flexibility to customize their own experience. Understanding how these layers interact is key to building a great notification experience.
+
+## Preference Levels
+
+Novu supports three levels of preferences, applied in order of priority:
+
+1. **Workflow channel preferences** — Set by you in the Novu dashboard. Controls which channels are enabled for a specific workflow.
+2. **Subscriber global preferences** — Set by the subscriber. Overrides all workflow-specific settings for a given channel across all workflows.
+3. **Subscriber channel preferences per workflow** — Set by the subscriber. Controls channel behavior for a specific workflow individually.
+
+The priority order is:
+
+```
+Workflow channel preferences
+  > Subscriber global preferences
+    > Subscriber channel preferences per workflow
+```
+
+**Examples:**
+- If the `email` channel is disabled in workflow channel preferences, subscribers will not receive email for that workflow, regardless of their personal settings.
+- If `email` is enabled at the workflow level but the subscriber has disabled it globally, the subscriber will not receive email from any workflow.
+- If both `chat` and `email` are enabled in the workflow but the subscriber has disabled `email` globally, they will only receive `chat` notifications for that workflow.
+
+## Configure Workflow Channel Preferences
+
+Workflow channel preferences set the default delivery behavior for all subscribers. By default, all channel steps in a workflow are enabled.
+
+<Steps>
+  <Step title="Open the workflow in the editor">
+    Go to the [Novu Dashboard](https://dashboard.novu.co), navigate to **Workflows**, and click the workflow you want to configure.
+  </Step>
+  <Step title="Open channel preferences">
+    In the workflow editor, click **Configure channel preferences** in the right sidebar.
+  </Step>
+  <Step title="Enable or disable channels">
+    Toggle individual channels on or off. Only channels that exist as steps in the workflow are available to configure — channels without a corresponding step are disabled.
+  </Step>
+  <Step title="Save your changes">
+    Your changes take effect immediately for all new workflow executions.
+  </Step>
+</Steps>
+
+<Note>
+  Workflow channel preferences only show the channels that are actually used as steps in that workflow. If a workflow has only an in-app and an email step, only those two channels appear in the preferences panel.
+</Note>
+
+## Critical Workflows
+
+Mark a workflow as **critical** to ensure notifications are always delivered to subscribers, regardless of their personal preferences. Subscribers cannot change their preferences for critical workflows, and critical workflows do not appear in the subscriber-facing preferences UI.
+
+Use critical workflows for high-priority, mandatory notifications:
+
+- Account verification and password reset
+- Security alerts and suspicious login notices
+- Financial transaction confirmations
+- Access revocation notices
+
+<Warning>
+  Critical workflows bypass all subscriber preference overrides. Use this designation only for notifications that subscribers genuinely must receive and should not be able to opt out of.
+</Warning>
+
+To mark a workflow as critical:
+
+1. Open the workflow in the Workflow Editor.
+2. Click **Configure channel preferences** in the right sidebar.
+3. Toggle the **Mark as critical** option.
+
+## Notification Severity
+
+Assign a severity level to a workflow to help subscribers quickly identify urgent notifications. Severity controls visual cues in the Novu `<Inbox />` component — such as color coding, icons, and the bell indicator.
+
+| Level | Default Visual | Use Case |
+|---|---|---|
+| **High** | Red hue | Critical alerts requiring immediate action |
+| **Medium** | Orange hue | Important but non-critical updates |
+| **Low** | No color | General or informational messages |
+| **None** | Default styling | Standard notifications (default for all workflows) |
+
+Set severity in the workflow editor by selecting a value from the **Notification severity** list. These default styles are fully [customizable via the `appearance` prop](/inbox/customization#notification-severity-styling).
+
+## Subscriber Global Preferences
+
+Subscribers can turn off entire channels globally from the `<Inbox />` preferences panel. A global preference overrides individual workflow settings. For example, if a subscriber disables SMS globally, they will not receive SMS notifications from any workflow — even if SMS is enabled for specific workflows.
+
+Global preferences apply across all workflows simultaneously, making them useful for subscribers who want to completely opt out of a channel without adjusting each workflow individually.
+
+## Subscriber Per-Workflow Preferences
+
+For each workflow, subscribers can customize which channels they receive notifications on. These preferences are accessible from the preferences panel in the `<Inbox />` component.
+
+The workflow name displayed to subscribers is the name you set in the Novu dashboard — so use clear, human-readable names like "Order Updates" or "Security Alerts."
+
+## Preferences API
+
+Retrieve and update subscriber preferences programmatically using the Novu API:
+
+<CardGroup cols={2}>
+  <Card title="Retrieve Subscriber Preferences" icon="arrow-down" href="https://docs.novu.co/api-reference/subscribers/retrieve-subscriber-preferences">
+    Fetch all preference settings for a specific subscriber.
+  </Card>
+  <Card title="Update Subscriber Preferences" icon="pen" href="https://docs.novu.co/api-reference/subscribers/update-subscriber-preferences">
+    Update channel preferences for a subscriber via the API.
+  </Card>
+</CardGroup>
+
+## Configure Preferences in the Inbox Component
+
+To let subscribers manage their preferences directly from your application, use the `<Preferences />` component or configure the `preferencesFilter`, `preferenceGroups`, and `preferencesSort` props on the `<Inbox />` component.
+
+See the [Inbox Preferences](/inbox/preferences) documentation for full configuration details, including:
+
+- Filtering preferences by workflow tags or criticality
+- Grouping preferences into named sections
+- Sorting the preferences list
+- Hiding the global preferences row
+- Building a fully custom preferences UI with the `usePreferences` hook
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Inbox Preferences" icon="sliders" href="/inbox/preferences">
+    Configure the subscriber-facing preferences UI in the Inbox component.
+  </Card>
+  <Card title="Create a Workflow" icon="diagram-project" href="/workflows/create">
+    Build a workflow and configure its channel steps and delivery settings.
+  </Card>
+  <Card title="Workflow Steps" icon="list" href="/workflows/steps">
+    Learn about channel and action steps available in Novu workflows.
+  </Card>
+  <Card title="Trigger a Workflow" icon="play" href="/workflows/triggers">
+    Send a notification by triggering a workflow via the REST API or SDK.
+  </Card>
+</CardGroup>

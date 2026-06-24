@@ -1,0 +1,196 @@
+---
+title: "Get Started with Novu in React"
+sidebarTitle: "React"
+description: "Integrate the Novu notification inbox into your React app. Install @novu/react, add the Inbox component, and trigger your first in-app notification."
+---
+
+The `@novu/react` package provides a drop-in `<Inbox />` component that brings real-time in-app notifications to any React application. This guide walks you through installation, wiring up the component with React Router, and sending your first notification — all in a few minutes.
+
+## Prerequisites
+
+- A [Novu account](https://dashboard.novu.co/auth/sign-up) — create one for free or [sign in](https://dashboard.novu.co/auth/sign-in) if you already have one.
+- Node.js 18+ and a React project.
+
+## Setup
+
+<Steps>
+
+### Create a React application
+
+If you don't have an existing project, scaffold one using Vite:
+
+<CodeGroup>
+```bash npm
+npm create vite@latest novu-inbox-react -- --template react-ts
+cd novu-inbox-react
+npm install
+npm run dev
+```
+```bash pnpm
+pnpm create vite@latest novu-inbox-react -- --template react-ts
+cd novu-inbox-react
+pnpm install
+pnpm dev
+```
+```bash yarn
+yarn create vite novu-inbox-react --template react-ts
+cd novu-inbox-react
+yarn
+yarn dev
+```
+```bash bun
+bun create vite novu-inbox-react --template react-ts
+cd novu-inbox-react
+bun install
+bun dev
+```
+</CodeGroup>
+
+### Install `@novu/react`
+
+Add the Novu React SDK to your project:
+
+<CodeGroup>
+```bash npm
+npm install @novu/react
+```
+```bash pnpm
+pnpm add @novu/react
+```
+```bash yarn
+yarn add @novu/react
+```
+```bash bun
+bun add @novu/react
+```
+</CodeGroup>
+
+### Create the Inbox component
+
+Create `src/components/novu-inbox.tsx`. Pass your `applicationIdentifier` and `subscriberId` as props, and provide a `routerPush` function to enable deep-linking from notification actions:
+
+```tsx src/components/novu-inbox.tsx
+import { Inbox } from '@novu/react';
+import { useNavigate } from 'react-router';
+
+export function NovuInbox() {
+  const navigate = useNavigate();
+
+  return (
+    <Inbox
+      applicationIdentifier="YOUR_APPLICATION_IDENTIFIER"
+      subscriber="YOUR_SUBSCRIBER_ID"
+      routerPush={(path: string) => navigate(path)}
+    />
+  );
+}
+```
+
+<Note>
+  Replace `YOUR_APPLICATION_IDENTIFIER` with the value from **API Keys** in your Novu dashboard, and `YOUR_SUBSCRIBER_ID` with your user's unique ID. Novu automatically creates a subscriber if the provided ID doesn't exist yet.
+</Note>
+
+**Finding your credentials:**
+
+- **`applicationIdentifier`** — In the [Novu dashboard](https://dashboard.novu.co), click **API Keys** and copy your Application Identifier.
+- **`subscriberId`** — This represents a user in your system, typically their database user ID. For testing, use the auto-generated ID from the **Subscribers** tab in the dashboard.
+
+### Add the Inbox to your app layout
+
+Set up React Router and render `NovuInbox` inside a shared layout so the bell icon appears on every route:
+
+```tsx src/App.tsx
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { NovuInbox } from './components/novu-inbox';
+
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      <nav>
+        <NovuInbox />
+      </nav>
+      {children}
+    </div>
+  );
+}
+
+function Home() {
+  return <div>Welcome to the Home page!</div>;
+}
+
+function App() {
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          {/* Add your routes here */}
+        </Routes>
+      </Layout>
+    </Router>
+  );
+}
+
+export default App;
+```
+
+### Run your application
+
+Start the development server:
+
+<CodeGroup>
+```bash npm
+npm run dev
+```
+```bash pnpm
+pnpm dev
+```
+```bash yarn
+yarn dev
+```
+```bash bun
+bun dev
+```
+</CodeGroup>
+
+Once running, a **bell icon** appears in the navbar. Click it to open the notification inbox. There are no notifications yet — let's change that.
+
+### Trigger your first notification
+
+Create a workflow in the Novu dashboard and send a test notification:
+
+1. Go to your [Novu dashboard](https://dashboard.novu.co).
+2. Click **Workflows** in the sidebar.
+3. Click **Create Workflow** and enter a name (e.g., `Welcome Notification`).
+4. Click **Create Workflow** to save it.
+5. Click the **Add Step** icon in the workflow editor and select **In-App** as the step type.
+6. In the In-App template editor, set:
+   - **Subject**: `Welcome to Novu`
+   - **Body**: `Hello, world!`
+7. Close the editor, then click **Trigger**.
+8. Click **Test Workflow**.
+
+### View the notification in your app
+
+Switch back to your React app and click the bell icon.
+
+You should see the notification you just triggered. 🎉
+
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Style the Inbox" icon="palette" href="/inbox/customization">
+    Customize the look and feel of your Inbox to match your application's design.
+  </Card>
+  <Card title="Inbox Components" icon="bell" href="/inbox/overview">
+    Explore the full Inbox and preferences UI component library.
+  </Card>
+  <Card title="Build Workflows" icon="diagram-project" href="/workflows/create">
+    Design multi-channel notification workflows with delays, digests, and conditions.
+  </Card>
+  <Card title="Topics & Fan-Out" icon="users" href="/concepts/topics">
+    Send notifications to groups of subscribers using topics.
+  </Card>
+</CardGroup>

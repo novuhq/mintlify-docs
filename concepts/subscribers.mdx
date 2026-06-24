@@ -1,0 +1,211 @@
+---
+title: "Subscribers: Managing Notification Recipients"
+sidebarTitle: "Subscribers"
+description: "Subscribers represent users in Novu. Learn how to create, update, and manage subscribers and their notification preferences."
+---
+
+In Novu, a **subscriber** is any user or system entity that should receive notifications. Subscribers are central to how Novu delivers messages — every workflow trigger targets one or more subscribers, and all delivery logic (channel routing, content personalization, and preference enforcement) operates at the subscriber level.
+
+## How Novu identifies subscribers
+
+Each subscriber is uniquely identified by a `subscriberId`. This ID comes from your application and serves as the stable reference for all subscriber operations: sending notifications, retrieving preferences, and managing profile data.
+
+Unlike email addresses or phone numbers — which can change or be shared — the `subscriberId` must remain unique and stable within your system. Use your application's internal **user ID** as the `subscriberId` to maintain consistency across your systems.
+
+<Tip>
+  Some teams use patterns like `auth0|userId` or `org_123:user_456` as their `subscriberId` to encode additional context. Any unique string works.
+</Tip>
+
+## Subscriber profile structure
+
+A subscriber's profile holds all the data Novu uses to personalize, route, and deliver notifications. The profile is organized into three categories:
+
+### User data
+
+Structured fields that you can reference directly in notification templates:
+
+| Field | Description |
+|-------|-------------|
+| `email` | Required for email channel steps |
+| `phone` | Required for SMS channel steps |
+| `firstName` | Used for personalization in templates |
+| `lastName` | Used for personalization in templates |
+| `locale` | Influences language and formatting |
+| `avatar` | Displayed in the Inbox component |
+
+### Custom data
+
+Any additional user-specific information you want to store and reference in templates. Use the `data` field as a flexible key-value JSON object:
+
+```json
+{
+  "data": {
+    "address": "123 Main St, Anytown, USA",
+    "membershipLevel": "Gold",
+    "preferredTopics": ["News", "Sports"],
+    "companySize": 250
+  }
+}
+```
+
+### Channel credentials
+
+To deliver messages through push or chat channels, Novu stores delivery credentials on the subscriber profile:
+
+- **`deviceTokens`** — Mobile device tokens for push notification delivery (FCM, OneSignal). Limited to 100 tokens per subscriber.
+- **`webhookUrl`** — Incoming webhook URL for chat providers such as Slack or Discord.
+
+<Warning>
+  Each subscriber is limited to a maximum of 100 device tokens. Requests that exceed this limit will be rejected.
+</Warning>
+
+## Creating subscribers
+
+Novu supports three approaches to subscriber creation. Choose the one that fits your architecture.
+
+### Just-in-time creation
+
+Pass subscriber data directly in the workflow trigger. If the subscriber doesn't exist, Novu creates them on the fly. If they do exist, Novu updates their profile with the latest values.
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.trigger({
+  workflowId: "welcome-email",
+  to: {
+    subscriberId: "subscriber_unique_identifier",
+    firstName: "Albert",
+    lastName: "Einstein",
+    email: "albert@einstein.com",
+    phone: "+1234567890",
+  },
+});
+```
+
+This approach is ideal when:
+- Notifications are sent during real-time events like sign-ups or transactions.
+- You want to keep subscriber creation and delivery tightly coupled.
+- Your system doesn't maintain subscriber profiles ahead of time.
+
+### Ahead of trigger
+
+Create subscriber profiles explicitly before any notification is sent — typically during user onboarding or registration. This lets you manage preferences, enrich profiles, and validate delivery readiness independently of notification logic.
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.subscribers.create({
+  subscriberId: "subscriber_unique_identifier",
+  firstName: "Albert",
+  lastName: "Einstein",
+  email: "albert@einstein.com",
+  phone: "+1234567890",
+  data: {
+    address: "123 Main St, Anytown, USA",
+    membershipLevel: "Gold",
+    preferredTopics: ["News", "Sports"],
+  },
+});
+```
+
+Recommended when:
+- You want to decouple subscriber management from notification delivery.
+- You rely on persistent user data or strict delivery validation.
+- You plan to use advanced segmentation or preference-based routing.
+
+### Bulk import
+
+Create up to 500 subscribers in a single API call. Use this for data migrations, large-scale syncs, or preloading subscribers from external systems.
+
+```typescript
+import { Novu } from "@novu/api";
+
+const novu = new Novu({ secretKey: "<YOUR_SECRET_KEY_HERE>" });
+
+await novu.subscribers.createBulk({
+  subscribers: [
+    {
+      subscriberId: "subscriber_unique_identifier_1",
+      firstName: "Albert",
+      lastName: "Einstein",
+      email: "albert@einstein.com",
+      phone: "+1234567890",
+    },
+    {
+      subscriberId: "subscriber_unique_identifier_2",
+      firstName: "Isaac",
+      lastName: "Newton",
+      email: "isaac@newton.com",
+      phone: "+1234567891",
+    },
+  ],
+});
+```
+
+<Info>
+  To migrate millions of users, call the bulk create endpoint in batches of up to 500 per request.
+</Info>
+
+## Managing subscriber data
+
+You can view and update subscriber profiles from the Novu dashboard or via the API.
+
+<Tabs>
+  <Tab title="Dashboard">
+    The [Novu dashboard](https://dashboard.novu.co) provides a visual interface for exploring and editing subscribers. Use it to:
+
+    - Search and filter by ID, email, phone, or name.
+    - Inspect profile fields, custom data, topic subscriptions, and channel preferences.
+    - Perform manual updates or troubleshoot delivery issues.
+
+    This is ideal for non-technical team members or situations where you want to audit subscriber data without writing code.
+  </Tab>
+  <Tab title="API">
+    The Novu API gives you programmatic control over all subscriber operations:
+
+    - Create, update, delete, and retrieve subscriber records at scale.
+    - Automate onboarding or sync processes.
+    - Perform bulk imports and exports.
+    - Integrate with external systems like CRMs or identity platforms.
+
+    See the [Subscribers API reference](/api-reference/subscribers/subscriber-schema) for full documentation.
+  </Tab>
+</Tabs>
+
+## Subscriber preferences
+
+Novu lets each subscriber configure how they receive notifications.
+
+### Global preferences
+
+Subscribers can opt in or out of specific delivery channels (email, SMS, push, in-app) across all workflows. These global settings serve as defaults and are respected unless a specific workflow overrides them.
+
+### Workflow-level preferences
+
+Subscribers can also adjust preferences per workflow — for example, receiving security alerts via both email and in-app, but marketing messages via in-app only.
+
+### Template personalization
+
+Subscriber fields — both structured (`firstName`, `email`) and custom `data` values — are available as template variables. Use them to create dynamic, personalized messages:
+
+- Greeting users by name with `{{subscriber.firstName}}`
+- Including location-specific content from `{{subscriber.data.city}}`
+- Adjusting tone based on `{{subscriber.data.membershipLevel}}`
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Can two subscribers share the same email address?">
+    Yes. Multiple subscribers can have the same email address, phone number, or other attributes. The `subscriberId` is the only field that must be unique.
+  </Accordion>
+  <Accordion title="Does the subscriberId have to match my system's user ID?">
+    No — any unique string works. Novu recommends using your system's user ID as the `subscriberId` to avoid confusion and maintain consistency across systems.
+  </Accordion>
+  <Accordion title="Can I send a notification without creating a subscriber first?">
+    Yes, via just-in-time creation. Pass subscriber data in the trigger's `to` field and Novu creates the subscriber automatically if they don't exist.
+  </Accordion>
+</AccordionGroup>

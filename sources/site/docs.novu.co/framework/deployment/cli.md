@@ -1,0 +1,35 @@
+# Source: https://docs.novu.co/framework/deployment/cli
+
+# Novu CLI Deployment
+
+Learn how to use the Novu CLI to synchronize your workflows to Novu Cloud for production deployment.
+
+The Novu CLI provides a mechanism for you to synchronize your workflows into Novu Cloud so that non-technical Novu users can control the workflow and Step-level controls and enable your workflows to be triggered via Novu API.
+
+US RegionEU Region
+
+```
+npx novu@latest sync \
+  --bridge-url <YOUR_DEPLOYED_URL_WITH_BRIDGE_ENDPOINT> \
+  --secret-key <NOVU_SECRET_KEY> \
+  --api-url https://api.novu.co
+```
+
+- If your application api server is running at URL **[https://api.domain.com](https://api.domain.com)** and **/api/novu** endpoint is serving Novu workflows created using Novu Framework, then `<YOUR_DEPLOYED_URL>`in above command will be `https://api.domain.com/api/novu`
+ 
+- If your application is running in local machine with a local studio server, the tunnel URL can be used as `<YOUR_DEPLOYED_URL>`. The tunnel URL follows the format of `https://<UUID>.novu.sh/api/novu`, and example is `https://041e553c-0dbf-47e0-8ffa-c4536f390145.novu.sh/api/novu`. In this example `041e553c-0dbf-47e0-8ffa-c4536f390145` is the unique tunnel identifier which is generated for each Novu user when starting a tunnel via `npx novu@latest dev`. The tunnel identifier is persisted to your local machine to guarantee the same tunnel URL each time you invoke `npx novu@latest dev`.
+ 
+
+## [Using vercel preview url](https://docs.novu.co/#using-vercel-preview-url)
+
+In free tier, vercel preview urls for non production deployments are not publicly accessible. You will need to enable [Protection Bypass for Automation](https://vercel.com/docs/security/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation#protection-bypass-for-automation) from settings to make the preview url publicly accessible. Use vercel generated secret key in query params with bridge url to make the bridge url accessible to novu.
+
+Example: `https://my-app-preview-url.vercel.app/api/novu?x-vercel-protection-bypass=BYPASS_SECRET_KEY`
+
+[Syncing\\ \\ Learn how to sync your local workflow changes to the Novu Cloud Dashboard across development and production environments.](https://docs.novu.co/framework/deployment/syncing) [GitHub Actions\\ \\ Learn how to deploy your Novu workflows using the built-in GitHub Action for CI/CD automation.](https://docs.novu.co/framework/deployment/actions)
+
+### On this page
+
+[Using vercel preview url](https://docs.novu.co/#using-vercel-preview-url)
+
+Copy page as markdown[Edit this page on GitHub](https://github.com/novuhq/docs/edit/main/content/docs/framework/deployment/cli.mdx)Open in ChatGPTOpen in Claude

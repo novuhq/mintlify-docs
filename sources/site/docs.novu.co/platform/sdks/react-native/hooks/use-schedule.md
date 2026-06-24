@@ -1,0 +1,161 @@
+# Source: https://docs.novu.co/platform/sdks/react-native/hooks/use-schedule
+
+[@novu/react-native](https://docs.novu.co/platform/sdks/react-native)/Hooks
+
+# Novu React Native useSchedule Hook
+
+Learn how to use the useSchedule hook to manage notification delivery schedules in your React Native application
+
+The `useSchedule` hook provides a way to fetch and manage the notification schedule for the current subscriber. It allows you to retrieve the existing schedule and update it with new availability settings directly from your React Native app.
+
+## [Return Value](https://docs.novu.co/#return-value)
+
+```
+type ScheduleReturn = {
+  schedule?: {
+    isEnabled: boolean;
+    weeklySchedule: {
+      monday?: DaySchedule;
+      tuesday?: DaySchedule;
+      wednesday?: DaySchedule;
+      thursday?: DaySchedule;
+      friday?: DaySchedule;
+      saturday?: DaySchedule;
+      sunday?: DaySchedule;
+    };
+    update: (params: Partial<Schedule>) => Promise<void>;
+  };
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+};
+ 
+type DaySchedule = {
+  isEnabled: boolean;
+  hours: Array<{ start: string; end:string; }>;
+};
+```
+
+## [Example usage](https://docs.novu.co/#example-usage)
+
+Here's how to use the `useSchedule` hook in a React Native component to display and update a subscriber's notification schedule. The `schedule.update()` method will create a schedule if one doesn't exist or update the existing one.
+
+```
+import { useSchedule } from '@novu/react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+ 
+function ScheduleManager() {
+  const { schedule, isLoading, error, refetch } = useSchedule();
+ 
+  if (isLoading) {
+    return <ActivityIndicator size="large" style={styles.loader} />;
+  }
+  
+  if (error) {
+    return <Text style={styles.errorText}>Error: {error.message}</Text>;
+  }
+ 
+  const handleUpdateSchedule = async () => {
+    await schedule?.update({
+      isEnabled: true,
+      weeklySchedule: {
+        monday: {
+          isEnabled: true,
+          hours: [{ start: '09:00 AM', end: '05:00 PM' }],
+        },
+        // Disable Wednesday
+        wednesday: {
+          isEnabled: false,
+          hours: [],
+        },
+      },
+    });
+  };
+ 
+  return (
+    <View style={styles.container}>
+      <Text style={styles.heading}>My Notification Schedule</Text>
+      <Text style={styles.text}>
+        Schedule Enabled: 
+        <Text style={styles.boldText}> {schedule?.isEnabled ? 'Yes' : 'No'}</Text>
+      </Text>
+      
+      <View style={styles.dayContainer}>
+        <Text style={styles.subHeading}>Monday Hours:</Text>
+        {schedule?.weeklySchedule?.monday?.isEnabled ? (
+          schedule.weeklySchedule.monday.hours.map((range, index) => (
+            <Text key={index} style={styles.text}>{`• ${range.start} - ${range.end}`}</Text>
+          ))
+        ) : (
+          <Text style={styles.text}>Not scheduled</Text>
+        )}
+      </View>
+ 
+      <TouchableOpacity
+        onPress={handleUpdateSchedule}
+        style={styles.button}
+      >
+        <Text style={styles.buttonText}>Set Work Hours</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+ 
+const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  loader: {
+    marginTop: 20,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+  },
+  heading: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  subHeading: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  text: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  dayContainer: {
+    marginTop: 12,
+  },
+  button: {
+    marginTop: 16,
+    backgroundColor: '#007BFF',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+ 
+export default ScheduleManager;
+```
+
+Changes to schedules are automatically synchronized with the server and will affect notification delivery times immediately.
+
+[usePreferences\\ \\ Learn how to use the usePreferences hook to manage notification preferences in your React Native application](https://docs.novu.co/platform/sdks/react-native/hooks/use-preferences) [Server Side\\ \\ Explore Novu's comprehensive collection of server-side SDKs for seamless notification integration across multiple programming languages](https://docs.novu.co/platform/sdks/server)
+
+### On this page
+
+[Return Value](https://docs.novu.co/#return-value) [Example usage](https://docs.novu.co/#example-usage)
+
+Copy page as markdown[Edit this page on GitHub](https://github.com/novuhq/docs/edit/main/content/docs/platform/sdks/react-native/hooks/use-schedule.mdx)Open in ChatGPTOpen in Claude

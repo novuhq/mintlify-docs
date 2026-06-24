@@ -1,0 +1,221 @@
+---
+title: "Framework Steps: Channels and Actions"
+sidebarTitle: "Steps"
+description: "Use step.email(), step.inApp(), step.sms(), step.push(), and step.chat() to send notifications, and step.delay() and step.digest() to control flow."
+---
+
+Steps are the building blocks of a Novu Framework workflow. Each `await step.*()` call inside your workflow handler represents one unit of work — either delivering a notification over a channel or performing a flow-control action. Steps execute sequentially and are durably tracked by Novu's execution engine.
+
+## Channel Steps
+
+Channel steps deliver notifications to your subscribers. Each channel step accepts a step ID (unique within the workflow), an async resolver function that returns the content, and an optional options object for `controlSchema` and `skip`.
+
+### Email
+
+Send an email notification. Return `subject` and `body` from the resolver.
+
+```typescript
+await step.email('send-email', async () => {
+  return {
+    subject: 'You received a message',
+    body: 'A new post has been created',
+  };
+});
+```
+
+<Tip>
+  The `body` field accepts HTML strings. Use [React Email](https://react.email) or [Vue Email](https://vuemail.net) with the `render()` helper to build rich email templates from components.
+</Tip>
+
+### In-App (Inbox)
+
+Send a notification to the Novu Inbox component embedded in your application. Return `subject` and `body` at minimum; `avatar`, `redirect`, `primaryAction`, `secondaryAction`, and `data` are all optional.
+
+```typescript
+await step.inApp('inbox', async () => {
+  return {
+    subject: 'Welcome to Acme!',
+    body: 'We are excited to have you on board.',
+    avatar: 'https://acme.com/avatar.png',
+    redirect: {
+      url: 'https://acme.com/welcome',
+      target: '_blank',
+    },
+    primaryAction: {
+      label: 'Get Started',
+      redirect: {
+        url: 'https://acme.com/get-started',
+        target: '_self',
+      },
+    },
+    secondaryAction: {
+      label: 'Learn More',
+      redirect: {
+        url: 'https://acme.com/learn-more',
+        target: '_self',
+      },
+    },
+    data: {
+      customData: 'customValue',
+      text: payload.text,
+    },
+  };
+});
+```
+
+### SMS
+
+Send an SMS notification. Return `body` from the resolver.
+
+```typescript
+await step.sms('send-sms', async () => {
+  return {
+    body: 'A new post has been created',
+  };
+});
+```
+
+<Note>
+  SMS delivery requires an SMS integration configured in the Novu dashboard. See the [SMS integration guide](https://docs.novu.co/platform/integrations/sms) for setup details.
+</Note>
+
+### Push
+
+Send a push notification to mobile or web platforms. Return `subject` and `body` from the resolver.
+
+```typescript
+await step.push('send-push', async () => {
+  return {
+    subject: 'You received a message',
+    body: 'A new post has been created',
+  };
+});
+```
+
+### Chat
+
+Send a message to a chat platform such as Slack, Microsoft Teams, WhatsApp, Telegram, or Discord. Return `body` from the resolver.
+
+```typescript
+await step.chat('send-chat', async () => {
+  return {
+    body: 'A new post has been created',
+  };
+});
+```
+
+## Action Steps
+
+Action steps control the flow of your workflow. They don't deliver notifications themselves — they modify timing, batch events, or execute custom logic between channel steps.
+
+### Delay
+
+Pause workflow execution for a fixed amount of time before continuing to the next step. Return `unit` and `amount` from the resolver.
+
+```typescript
+await step.delay(
+  'wait-before-followup',
+  () => {
+    return {
+      type: 'regular',
+      unit: 'days',
+      amount: 3,
+    };
+  }
+);
+```
+
+Valid `unit` values: `'seconds'` | `'minutes'` | `'hours'` | `'days'` | `'weeks'` | `'months'`
+
+See the [Delay guide](/framework/delay) for more details and the `skip` option.
+
+### Digest
+
+Aggregate multiple trigger events into a single notification. The step returns an `events` array containing all batched payloads.
+
+```typescript
+const { events } = await step.digest('digest-3-days', async () => {
+  return {
+    unit: 'days',
+    amount: 3,
+  };
+});
+
+await step.email('send-digest-email', async () => {
+  const eventCount = events.length;
+  return {
+    subject: 'Your Activity Summary',
+    body: `You have ${eventCount} new events`,
+  };
+});
+```
+
+See the [Digest guide](/framework/digest) for cron-based digests, custom digest keys, and accessing event payloads.
+
+## Using Steps Together
+
+Combine channel and action steps in any order to build multi-step workflows. Here is a complete example that sends an immediate welcome email, waits three days, and then sends an in-app follow-up:
+
+```typescript
+import { workflow } from '@novu/framework';
+
+workflow('onboarding', async ({ step, payload }) => {
+  // 1. Immediate welcome email
+  await step.email('welcome-email', async () => {
+    return {
+      subject: `Welcome, ${payload.name}!`,
+      body: 'Thanks for signing up. Here is how to get started.',
+    };
+  });
+
+  // 2. Wait 3 days
+  await step.delay('wait-3-days', () => ({
+    type: 'regular',
+    unit: 'days',
+    amount: 3,
+  }));
+
+  // 3. In-app nudge after the delay
+  await step.inApp('follow-up', async () => {
+    return {
+      subject: 'How are things going?',
+      body: 'Let us know if you have any questions.',
+    };
+  });
+});
+```
+
+<Note>
+  All step IDs within a single workflow must be unique. Novu uses these IDs to track execution state and resume workflows after delays or digests.
+</Note>
+
+## Step Options
+
+Every step accepts an optional third argument with these common options:
+
+| Option | Type | Description |
+|---|---|---|
+| `controlSchema` | JSON Schema \| Zod | Exposes editable fields in the Novu dashboard for non-technical users. |
+| `skip` | `() => boolean` | Conditionally skip this step at runtime. |
+
+```typescript
+await step.email(
+  'conditional-email',
+  async (controls) => ({
+    subject: controls.subject,
+    body: controls.body,
+  }),
+  {
+    skip: () => !payload.sendEmail,
+    controlSchema: {
+      type: 'object',
+      properties: {
+        subject: { type: 'string', default: 'Hello!' },
+        body: { type: 'string', default: 'Welcome to our platform.' },
+      },
+      required: ['subject', 'body'],
+      additionalProperties: false,
+    } as const,
+  }
+);
+```

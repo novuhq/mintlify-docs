@@ -1,0 +1,201 @@
+---
+title: "PHP Server SDK for Novu Notifications"
+sidebarTitle: "PHP"
+description: "Use the Novu PHP SDK to trigger notifications and manage subscribers from your PHP application. Install via Composer and authenticate with your secret key."
+---
+
+The Novu PHP SDK wraps the [Novu REST API](https://api.novu.co/v1) in a clean PHP interface. Use it to trigger notification workflows, create and update subscribers, and integrate Novu into any PHP application — Laravel, Symfony, or plain PHP.
+
+<Info>
+  The source code for this SDK is available on [GitHub](https://github.com/novuhq/php-novu).
+</Info>
+
+## Installation
+
+The SDK uses [Composer](https://getcomposer.org/) for dependency management. Run the following command to add it to your project:
+
+```bash
+composer require "novuhq/novu"
+```
+
+---
+
+## Initialization
+
+Use the builder pattern to create a `Novu` SDK instance. Pass your secret key to `setSecurity()`. Always load the key from an environment variable.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use novu\Novu;
+
+$sdk = Novu::builder()
+    ->setSecurity($_ENV['NOVU_SECRET_KEY'])
+    ->build();
+```
+
+<Warning>
+  Your secret key grants full API access. Store it in your environment configuration (for example, a `.env` file) and never commit it to source control.
+</Warning>
+
+For the EU region, chain `setServerURL()` in the builder:
+
+```php
+$sdk = Novu::builder()
+    ->setSecurity($_ENV['NOVU_SECRET_KEY'])
+    ->setServerURL('https://eu.api.novu.co')
+    ->build();
+```
+
+---
+
+## Trigger a Workflow
+
+Call `$sdk->trigger()` to fire a notification workflow. Build a `TriggerEventRequestDto` with your `workflowId`, the `to` subscriber, and any `payload` variables your templates reference.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use novu\Novu;
+use novu\Models\Components;
+
+$sdk = Novu::builder()
+    ->setSecurity($_ENV['NOVU_SECRET_KEY'])
+    ->build();
+
+$triggerEventRequestDto = new Components\TriggerEventRequestDto(
+    workflowId: 'welcome-email',
+    to: new Components\SubscriberPayloadDto(
+        subscriberId: 'user_123',
+        firstName: 'Alice',
+        lastName: 'Smith',
+        email: 'alice@example.com',
+        phone: '+1234567890',
+    ),
+    payload: [
+        'user_name'   => 'Alice',
+        'action_url'  => 'https://app.example.com/get-started',
+    ],
+);
+
+$response = $sdk->trigger(triggerEventRequestDto: $triggerEventRequestDto);
+
+if ($response->triggerEventResponseDto !== null) {
+    echo 'Workflow triggered successfully';
+}
+```
+
+### Trigger with Overrides
+
+Use `overrides` to customize channel-specific behavior at send time, such as adding a BCC address to an email.
+
+```php
+$triggerEventRequestDto = new Components\TriggerEventRequestDto(
+    workflowId: 'order-confirmation',
+    to: new Components\SubscriberPayloadDto(
+        subscriberId: 'user_123',
+        email: 'alice@example.com',
+    ),
+    payload: [
+        'order_id' => 'ORD-9876',
+        'total'    => '$49.99',
+    ],
+    overrides: [
+        'email' => [
+            'bcc' => 'orders-archive@company.com',
+        ],
+    ],
+);
+
+$response = $sdk->trigger(triggerEventRequestDto: $triggerEventRequestDto);
+```
+
+---
+
+## Create a Subscriber
+
+Register a subscriber in Novu before sending them notifications. Subscriber profile data is available as variables in your notification templates.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+require 'vendor/autoload.php';
+
+use novu\Novu;
+use novu\Models\Components;
+
+$sdk = Novu::builder()
+    ->setSecurity($_ENV['NOVU_SECRET_KEY'])
+    ->build();
+
+$createSubscriberDto = new Components\CreateSubscriberRequestDto(
+    subscriberId: 'user_123',
+    firstName: 'Alice',
+    lastName: 'Smith',
+    email: 'alice@example.com',
+    phone: '+1234567890',
+    avatar: 'https://example.com/avatars/alice.png',
+    data: [
+        'plan'        => 'pro',
+        'signedUpAt'  => '2024-01-15',
+    ],
+);
+
+$response = $sdk->subscribers->create(createSubscriberRequestDto: $createSubscriberDto);
+
+if ($response->subscriberResponseDto !== null) {
+    echo 'Subscriber created: ' . $response->subscriberResponseDto->subscriberId;
+}
+```
+
+---
+
+## Update a Subscriber
+
+Update an existing subscriber's profile details using their `subscriberId`.
+
+```php
+use novu\Models\Components;
+
+$updateDto = new Components\UpdateSubscriberRequestDto(
+    firstName: 'Alice',
+    lastName: 'Johnson',
+    email: 'alice.johnson@example.com',
+    data: ['plan' => 'enterprise'],
+);
+
+$response = $sdk->subscribers->update(
+    subscriberId: 'user_123',
+    updateSubscriberRequestDto: $updateDto,
+);
+```
+
+---
+
+## Error Handling
+
+Check the response object before accessing its properties, and wrap calls in try/catch for robust error handling.
+
+```php
+try {
+    $response = $sdk->trigger(triggerEventRequestDto: $triggerEventRequestDto);
+
+    if ($response->triggerEventResponseDto !== null) {
+        echo 'Triggered: ' . $response->triggerEventResponseDto->transactionId;
+    } else {
+        echo 'Trigger returned no response DTO.';
+    }
+} catch (\Exception $e) {
+    echo 'Error: ' . $e->getMessage();
+}
+```

@@ -1,0 +1,141 @@
+---
+title: "Bridge Endpoint: Serve Your Framework Workflows"
+sidebarTitle: "Endpoint"
+description: "The Novu Framework Bridge endpoint is an HTTP handler you expose in your app. Novu calls it to execute workflow steps during notification delivery."
+---
+
+The Bridge endpoint is the single HTTP route your application exposes so that the Novu Worker Engine can communicate with your workflow code. When Novu needs to execute a step — resolve its content, check skip conditions, or validate controls — it makes an HTTP request to this endpoint. Think of it as a webhook that Novu calls to fetch contextual, just-in-time notification data.
+
+<Note>
+  You expose **one** Bridge endpoint per application, typically at `/api/novu`. All your workflows are registered on that single endpoint.
+</Note>
+
+## The `serve` Function
+
+The `@novu/framework` package ships framework-specific `serve` adapters that handle:
+
+- Parsing `GET`, `POST`, `PUT`, and `OPTIONS` requests
+- HMAC signature authentication
+- Framework-specific response formatting and error handling
+
+Register all your workflow definitions with `serve`, then export the result as your route handler.
+
+## Framework Examples
+
+<CodeGroup>
+  ```typescript Next.js App Router (app/api/novu/route.ts)
+  import { serve } from '@novu/framework/next';
+  import { newSignupWorkflow } from '../../../workflows/new-signup';
+  import { weeklyDigestWorkflow } from '../../../workflows/weekly-digest';
+
+  export const { GET, POST, PUT } = serve({
+    workflows: [newSignupWorkflow, weeklyDigestWorkflow],
+  });
+  ```
+
+  ```typescript Next.js Pages Router (pages/api/novu.ts)
+  import { serve } from '@novu/framework/next';
+  import { newSignupWorkflow } from '../../workflows/new-signup';
+
+  export default serve({
+    workflows: [newSignupWorkflow],
+  });
+  ```
+
+  ```typescript Express (routes/novu.ts)
+  import { serve } from '@novu/framework/express';
+  import { newSignupWorkflow } from '../workflows/new-signup';
+
+  const { router } = serve({
+    workflows: [newSignupWorkflow],
+  });
+
+  app.use('/api/novu', router);
+  ```
+</CodeGroup>
+
+## Supported Frameworks
+
+<CardGroup cols={2}>
+  <Card title="Next.js" icon="n">
+    `import { serve } from '@novu/framework/next'`
+  </Card>
+  <Card title="Express.js" icon="server">
+    `import { serve } from '@novu/framework/express'`
+  </Card>
+  <Card title="Nuxt" icon="n">
+    `import { serve } from '@novu/framework/nuxt'`
+  </Card>
+  <Card title="H3" icon="h">
+    `import { serve } from '@novu/framework/h3'`
+  </Card>
+  <Card title="Remix" icon="react">
+    `import { serve } from '@novu/framework/remix'`
+  </Card>
+  <Card title="SvelteKit" icon="s">
+    `import { serve } from '@novu/framework/sveltekit'`
+  </Card>
+</CardGroup>
+
+## Writing a Custom `serve` Function
+
+If your framework is not listed above, you can implement a custom `serve` function using `NovuRequestHandler` from `@novu/framework`. The example below shows how the Express adapter works internally — use it as a template for any HTTP framework:
+
+```typescript
+import { type Request, type Response } from 'express';
+import { NovuRequestHandler, ServeHandlerOptions } from '@novu/framework';
+
+export const serve = (options: ServeHandlerOptions) => {
+  const requestHandler = new NovuRequestHandler({
+    frameworkName: 'express',
+    ...options,
+    handler: (incomingRequest: Request, response: Response) => ({
+      method: () => incomingRequest.method,
+      headers: (key) => {
+        const header = incomingRequest.headers[key];
+        return Array.isArray(header) ? header[0] : header;
+      },
+      queryString: (key) => {
+        const qs = incomingRequest.query[key];
+        return Array.isArray(qs) ? qs[0] : qs;
+      },
+      body: () => incomingRequest.body,
+      url: () =>
+        new URL(incomingRequest.url, `https://${incomingRequest.headers.get('host') || ''}`),
+      transformResponse: ({ body, headers, status }) => {
+        Object.entries(headers).forEach(([headerName, headerValue]) => {
+          response.setHeader(headerName, headerValue);
+        });
+        return response.status(status).send(body);
+      },
+    }),
+  });
+
+  return requestHandler.createHandler();
+};
+```
+
+## Security
+
+The Bridge endpoint must be reachable from the internet in production so Novu Cloud workers can call it. Novu Framework protects the endpoint with **HMAC signature verification** using your `NOVU_SECRET_KEY`:
+
+- **Production** (`NODE_ENV=production`) — HMAC verification is **on by default**. Every request from Novu Cloud is signed with a `Novu-Signature` header containing a timestamp (`t=`) and a `v1` scheme signature. The framework verifies this automatically — no code required on your end.
+- **Development** (`NODE_ENV=development`) — HMAC verification is **off** so the Novu Local Studio can reach your endpoint without credentials.
+
+<Warning>
+  Never expose your `NOVU_SECRET_KEY` in client-side code or commit it to source control. Store it as an environment variable and rotate it immediately if it is compromised.
+</Warning>
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Does the Bridge endpoint have to be at /api/novu?">
+    No. You can mount the serve handler at any path. Just make sure the URL you provide during syncing (the `--bridge-url` flag) matches the actual path where the handler is mounted.
+  </Accordion>
+  <Accordion title="What is the difference between a tunnel URL and a Bridge URL?">
+    The **tunnel URL** is a temporary public URL created by `npx novu@latest dev` for local development — it forwards requests to your local server. The **Bridge URL** is the permanent, publicly accessible URL of your deployed endpoint used in staging and production.
+  </Accordion>
+  <Accordion title="Does the Bridge endpoint need to be publicly accessible?">
+    Yes in production. Novu Cloud workers call your endpoint to resolve step content and execute workflow logic. During local development, the Local Studio uses the tunnel URL instead.
+  </Accordion>
+</AccordionGroup>

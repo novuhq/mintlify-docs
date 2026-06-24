@@ -1,0 +1,111 @@
+---
+title: "Delay Step: Schedule Notifications Over Time"
+sidebarTitle: "Delay"
+description: "Pause a Novu workflow for a set period before executing the next step. Use delays to send follow-up messages hours or days after the initial notification."
+---
+
+The Delay step is an action step that pauses workflow execution for a specified duration before continuing to the next step. It gives you precise control over notification timing — allowing you to schedule follow-up messages, wait for user responses, or defer delivery until a specific moment.
+
+When a workflow reaches a Delay step, execution pauses. Once the delay condition is satisfied, the workflow resumes and all downstream steps execute normally.
+
+## How Delay Works
+
+<Steps>
+  <Step title="Workflow reaches the Delay step">
+    Execution pauses at the Delay node. The workflow is placed in a waiting state for the configured duration.
+  </Step>
+  <Step title="Duration elapses">
+    Novu monitors the delay timer. Once the configured duration passes (or the scheduled time arrives), the workflow is resumed.
+  </Step>
+  <Step title="Downstream steps execute">
+    All steps after the Delay step run normally, with access to the original trigger payload.
+  </Step>
+</Steps>
+
+<Info>
+  Steps placed **before** the Delay step run immediately when the workflow is triggered. Steps placed **after** the Delay step run only after the delay completes.
+</Info>
+
+## When to Use Delay
+
+The Delay step is the right choice any time you want to introduce a pause between notification steps:
+
+| Use Case | Delay Duration |
+|---|---|
+| Wait before sending a push, in case the user already saw the in-app notification | 5–15 minutes |
+| Send a follow-up email if a user hasn't confirmed their email address | 1–2 hours |
+| Remind a user about an abandoned shopping cart | 24 hours |
+| Send an onboarding check-in after registration | 3 days |
+| Deliver a renewal reminder before a subscription expires | 7–14 days |
+
+## Add a Delay Step
+
+<Steps>
+  <Step title="Open the Workflow Editor">
+    Go to the [Novu Dashboard](https://dashboard.novu.co), navigate to **Workflows**, and open or create a workflow.
+  </Step>
+  <Step title="Add the Delay step">
+    Click the **+** icon at the position in the workflow where you want to introduce a pause. Select **Delay** from the action steps panel.
+  </Step>
+  <Step title="Configure the delay duration">
+    Set the delay amount and unit — for example, 30 minutes, 2 hours, 1 day, or a specific scheduled time. Delay can also read duration values from the trigger payload for dynamic scheduling.
+  </Step>
+  <Step title="Add steps after the delay">
+    Add channel steps (email, in-app, SMS, push, or chat) after the Delay node. These steps execute once the delay period has elapsed.
+  </Step>
+</Steps>
+
+## Example: In-App Then Follow-Up Email
+
+A common pattern is to send an immediate in-app notification, then follow up by email if needed:
+
+```
+Trigger
+  └── In-App (immediate — shown right away)
+  └── Delay (24 hours)
+  └── Email (sent 24 hours after trigger)
+```
+
+This gives users a chance to see the in-app message first. If they act on it, you can use step conditions on the email step to skip the follow-up entirely.
+
+## Combining Delay with Step Conditions
+
+You can attach step conditions to any step that comes after a Delay. For example:
+
+- Skip the email step if the in-app notification was already read
+- Only send the SMS if the subscriber has not logged in during the delay period
+- Escalate to push only if the email was not opened
+
+This makes Delay a powerful building block for adaptive, multi-step notification flows.
+
+## Delay vs. Digest
+
+Both Delay and Digest control timing, but they serve different purposes:
+
+| Feature | Delay | Digest |
+|---|---|---|
+| Purpose | Pause execution for a fixed time | Batch multiple events into one |
+| Triggers affected | Every trigger waits independently | Multiple triggers are merged |
+| Output | One notification per trigger, sent later | One notification summarizing many triggers |
+| Use case | Follow-up messages, reminders | Activity summaries, burst protection |
+
+<Note>
+  For full configuration options — including payload-driven dynamic delays and scheduled delivery — refer to the [Configure Delay Step](https://docs.novu.co/platform/workflow/add-and-configure-steps/configure-action-steps/delay) documentation.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Digest Step" icon="layer-group" href="/workflows/digest">
+    Batch multiple trigger events into a single consolidated notification.
+  </Card>
+  <Card title="Workflow Steps" icon="list" href="/workflows/steps">
+    Explore all available step types for building notification workflows.
+  </Card>
+  <Card title="Trigger a Workflow" icon="play" href="/workflows/triggers">
+    Learn how to trigger a workflow from your application via the API or SDK.
+  </Card>
+  <Card title="Create a Workflow" icon="diagram-project" href="/workflows/create">
+    Start from scratch or use a template to build your first workflow.
+  </Card>
+</CardGroup>

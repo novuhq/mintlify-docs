@@ -1,0 +1,197 @@
+---
+title: "Go Server SDK for Novu Notifications"
+sidebarTitle: "Go"
+description: "Use the Novu Go SDK to send notifications and manage subscribers from your Go application. Install the package and authenticate with your secret key."
+---
+
+The Novu Go SDK wraps the [Novu REST API](https://api.novu.co/v1) in an idiomatic Go client. Use it to trigger notification workflows, manage subscribers, and integrate Novu into any Go application or microservice.
+
+<Info>
+  The source code for this SDK is available on [GitHub](https://github.com/novuhq/novu-go).
+</Info>
+
+## Installation
+
+Run `go get` to add the SDK to your module:
+
+```bash
+go get github.com/novuhq/novu-go
+```
+
+---
+
+## Initialization
+
+Import the SDK and create a client with `novugo.New()`. Pass your secret key using `novugo.WithSecurity()`. Load the key from an environment variable to keep it out of source control.
+
+```go
+package main
+
+import (
+	"context"
+	novugo "github.com/novuhq/novu-go"
+	"os"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := novugo.New(
+		novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")),
+	)
+
+	_ = ctx
+	_ = s
+}
+```
+
+For the EU region, pass the server URL option:
+
+```go
+s := novugo.New(
+	novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")),
+	novugo.WithServerURL("https://eu.api.novu.co"),
+)
+```
+
+---
+
+## Trigger a Workflow
+
+Call `s.Trigger()` to fire a notification workflow. Provide the `WorkflowID`, the `To` subscriber, and any `Payload` variables your workflow templates reference.
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+
+	novugo "github.com/novuhq/novu-go"
+	"github.com/novuhq/novu-go/models/components"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := novugo.New(
+		novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")),
+	)
+
+	res, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+		WorkflowID: "welcome-email",
+		To: components.CreateToSubscriberPayloadDto(
+			components.SubscriberPayloadDto{
+				SubscriberID: "user_123",
+				FirstName:    "Alice",
+				LastName:     "Smith",
+				Email:        "alice@example.com",
+			},
+		),
+		Payload: map[string]any{
+			"user_name":   "Alice",
+			"action_url":  "https://app.example.com/get-started",
+		},
+	}, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if res.TriggerEventResponseDto != nil {
+		log.Printf("Workflow triggered: %+v", res.TriggerEventResponseDto)
+	}
+}
+```
+
+### Trigger with Overrides
+
+Use `Overrides` to customize channel-specific behavior at send time.
+
+```go
+res, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+	WorkflowID: "order-confirmation",
+	To: components.CreateToSubscriberPayloadDto(
+		components.SubscriberPayloadDto{
+			SubscriberID: "user_123",
+			Email:        "alice@example.com",
+		},
+	),
+	Payload: map[string]any{
+		"order_id": "ORD-9876",
+		"total":    "$49.99",
+	},
+	Overrides: map[string]map[string]any{
+		"email": {
+			"bcc": "orders-archive@company.com",
+		},
+	},
+}, nil)
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+---
+
+## Create a Subscriber
+
+Register a subscriber in Novu before sending them notifications.
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+
+	novugo "github.com/novuhq/novu-go"
+	"github.com/novuhq/novu-go/models/components"
+)
+
+func main() {
+	ctx := context.Background()
+
+	s := novugo.New(
+		novugo.WithSecurity(os.Getenv("NOVU_SECRET_KEY")),
+	)
+
+	res, err := s.Subscribers.Create(ctx, components.CreateSubscriberRequestDto{
+		SubscriberID: "user_123",
+		FirstName:    novugo.String("Alice"),
+		LastName:     novugo.String("Smith"),
+		Email:        novugo.String("alice@example.com"),
+		Phone:        novugo.String("+1234567890"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Subscriber created: %+v", res)
+}
+```
+
+---
+
+## Error Handling
+
+Check the returned `error` value from every SDK call and handle it before accessing the response.
+
+```go
+res, err := s.Trigger(ctx, components.TriggerEventRequestDto{
+	WorkflowID: "user-alert",
+	To: components.CreateToSubscriberPayloadDto(
+		components.SubscriberPayloadDto{SubscriberID: "user_123"},
+	),
+	Payload: map[string]any{"message": "Something needs your attention."},
+}, nil)
+if err != nil {
+	log.Printf("Error triggering notification: %v", err)
+	return
+}
+
+if res.TriggerEventResponseDto != nil {
+	log.Printf("Success: %+v", res.TriggerEventResponseDto)
+}
+```
