@@ -6,7 +6,5 @@
 drafts/
 *.draft.mdx
 
-# Migration tooling and the legacy Fumadocs source (not part of the published docs)
-docs-old/
-migration/
+# Non-documentation files
 skills-lock.json

@@ -1,3 +1,0 @@
-Deploy your application to your preferred hosting provider. Make sure the `/api/novu` endpoint is accessible from the internet.
-
-For local development and testing, you can use tools like ngrok to expose your local server to the internet.
