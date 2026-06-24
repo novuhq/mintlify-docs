@@ -5,3 +5,8 @@
 # Draft content
 drafts/
 *.draft.mdx
+
+# Migration tooling and the legacy Fumadocs source (not part of the published docs)
+docs-old/
+migration/
+skills-lock.json

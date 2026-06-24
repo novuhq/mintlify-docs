@@ -1,0 +1,7 @@
+Install the Novu Framework package:
+
+```bash
+npm install @novu/framework
+```
+
+This package provides all the necessary tools to build and manage your notification workflows.
