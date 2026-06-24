@@ -806,7 +806,7 @@
             ]
           }
         ],
-        "openapi": "openapi.json"
+        "openapi": "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples"
       }
     ]
   },

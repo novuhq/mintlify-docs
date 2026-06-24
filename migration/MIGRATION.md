@@ -72,12 +72,15 @@ Group icons are restored from each folder's `meta.json`. All 95 distinct icons i
 
 ## API reference spec
 
-`migrate-openapi.mjs` fetches the **complete** spec from Speakeasy
-(`https://spec.speakeasy.com/novu/novu/json-development-with-code-samples`, ~93 paths, v3.15.0)
-— `docs-old/openapi.json` was a stale 36-path snapshot that left 80+ pages empty. It also
-strips stray quotes from routes (`'/v2/x/{id}'` → `/v2/x/{id}`) and resolves param-name drift
-(`{variableId}` → `{variableKey}`) by matching each operation's structural signature against the
-spec. All 116 operation pages resolve to a real spec operation (verified at generation time).
+`docs.json` references the **public Speakeasy spec URL** directly on the API Reference tab
+(`openapi: "https://spec.speakeasy.com/novu/novu/json-development-with-code-samples"`), so
+Mintlify always builds against the live spec (~93 paths, v3.15.0) — no committed snapshot to go
+stale (the old `docs-old/openapi.json` was a stale 36-path snapshot that left 80+ pages empty).
+`migrate-openapi.mjs` fetches the same spec in memory only to resolve each page's route: it
+strips stray quotes (`'/v2/x/{id}'` → `/v2/x/{id}`) and fixes param-name drift
+(`{variableId}` → `{variableKey}`) by matching each operation's structural signature. It also
+removes any local `openapi.json` so Mintlify doesn't auto-generate from a stale file. All 116
+operation pages resolve to a real spec operation (verified at generation time).
 
 ## Redirects
 

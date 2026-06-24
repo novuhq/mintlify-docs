@@ -24,23 +24,25 @@ function walk(dir, acc = []) {
   return acc;
 }
 
-// Acquire the OpenAPI spec. The old build fetched the COMPLETE spec from Speakeasy at
-// build time; docs-old/openapi.json is a stale 36-path snapshot. Fetch the full spec
-// (so v2 routes — topics, workflows, layouts, etc. — resolve), fall back to the snapshot.
-const SPEC_URL = 'https://spec.speakeasy.com/novu/novu/json-development-with-code-samples';
-const specDest = path.join(ROOT, 'openapi.json');
+// The docs reference the PUBLIC Speakeasy spec URL directly (docs.json -> API Reference tab),
+// so Mintlify always builds against the live spec — no committed snapshot to go stale.
+// We still fetch it here (in memory) only to resolve each page's route against real operations
+// (param-name drift, quote stripping). Fall back to the local snapshot if the fetch fails.
+export const SPEC_URL = 'https://spec.speakeasy.com/novu/novu/json-development-with-code-samples';
+let spec;
 try {
   const res = await fetch(SPEC_URL);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const spec = await res.json();
-  fs.writeFileSync(specDest, JSON.stringify(spec));
+  spec = await res.json();
   console.log(`Fetched complete spec: ${Object.keys(spec.paths || {}).length} paths (v${spec.info?.version}).`);
 } catch (e) {
-  console.warn(`Spec fetch failed (${e.message}); using docs-old/openapi.json snapshot.`);
-  fs.copyFileSync(path.join(ROOT, 'docs-old', 'openapi.json'), specDest);
+  console.warn(`Spec fetch failed (${e.message}); resolving routes against docs-old/openapi.json snapshot.`);
+  spec = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs-old', 'openapi.json'), 'utf8'));
 }
+// remove any stale committed snapshot so Mintlify doesn't auto-generate from it
+fs.rmSync(path.join(ROOT, 'openapi.json'), { force: true });
 const { specOps, specBySig } = (() => {
-  const s = JSON.parse(fs.readFileSync(specDest, 'utf8'));
+  const s = spec;
   const set = new Set();
   const bySig = new Map(); // method + path with param names normalized -> actual "METHOD /path"
   for (const [p, ms] of Object.entries(s.paths || {})) {
@@ -96,7 +98,7 @@ fs.writeFileSync(
   path.join(ROOT, 'migration', 'openapi-pages.json'),
   JSON.stringify(generated.sort(), null, 2)
 );
-console.log(`Generated ${count} API reference pages (spec -> openapi.json).`);
+console.log(`Generated ${count} API reference pages (spec referenced live from ${SPEC_URL}).`);
 if (notInSpec.length) {
   console.warn(`\n${notInSpec.length} page(s) reference operations NOT in the spec (will render empty):`);
   notInSpec.forEach((x) => console.warn('  -', x));

@@ -24,9 +24,10 @@ while ((m = pairRe.exec(mapBlock))) {
   redirects.push({ source, destination, permanent: true });
 }
 
-// ---- attach OpenAPI spec to the API Reference tab
+// ---- attach the public OpenAPI spec URL to the API Reference tab (live, not a snapshot)
+const SPEC_URL = 'https://spec.speakeasy.com/novu/novu/json-development-with-code-samples';
 for (const tab of nav.tabs) {
-  if (tab.tab === 'API Reference') tab.openapi = 'openapi.json';
+  if (tab.tab === 'API Reference') tab.openapi = SPEC_URL;
 }
 
 const docs = {
