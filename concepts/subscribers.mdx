@@ -1,7 +1,7 @@
 ---
-title: "Subscribers: Managing Notification Recipients"
+title: "Subscribers: Managing Notification Recipients in Novu"
 sidebarTitle: "Subscribers"
-description: "Subscribers represent users in Novu. Learn how to create, update, and manage subscribers and their notification preferences."
+description: "Subscribers represent users in Novu. Learn how to create, update, and manage subscriber profiles, channel credentials, and notification preferences."
 ---
 
 In Novu, a **subscriber** is any user or system entity that should receive notifications. Subscribers are central to how Novu delivers messages — every workflow trigger targets one or more subscribers, and all delivery logic (channel routing, content personalization, and preference enforcement) operates at the subscriber level.
@@ -206,6 +206,6 @@ Subscriber fields — both structured (`firstName`, `email`) and custom `data` v
     No — any unique string works. Novu recommends using your system's user ID as the `subscriberId` to avoid confusion and maintain consistency across systems.
   </Accordion>
   <Accordion title="Can I send a notification without creating a subscriber first?">
-    Yes, via just-in-time creation. Pass subscriber data in the trigger's `to` field and Novu creates the subscriber automatically if they don't exist.
+    No. A subscriber must exist in Novu before a notification can be delivered to them. However, Novu supports just-in-time creation: pass subscriber data in the trigger's `to` field and Novu creates the subscriber automatically at trigger time if they don't exist yet.
   </Accordion>
 </AccordionGroup>

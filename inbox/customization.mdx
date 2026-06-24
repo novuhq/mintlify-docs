@@ -1,7 +1,7 @@
 ---
-title: "Customize the Look and Feel of Novu Inbox"
+title: "Customize the Novu Inbox: Themes, Styles, and Icons"
 sidebarTitle: "Customization"
-description: "Override styles, swap icons, and theme the Novu Inbox to match your design system using the appearance prop and CSS variables."
+description: "Override styles, swap icons, and theme the Novu Inbox to match your design system using the appearance prop, CSS variables, and element overrides."
 ---
 
 The Novu Inbox component is designed to be fully themeable and adaptable to your application's visual language. All theming options are exposed through the `appearance` prop, which lets you apply custom styles at different levels of control — from predefined themes to fine-grained component overrides.
@@ -412,6 +412,12 @@ export default ResponsiveInbox;
 @media (max-width: 480px) {
   .novu-popover-content {
     max-width: 250px;
+  }
+}
+
+@media (max-width: 320px) {
+  .novu-popover-content {
+    max-width: 200px;
   }
 }
 ```

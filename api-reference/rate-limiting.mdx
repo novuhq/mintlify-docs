@@ -1,5 +1,5 @@
 ---
-title: "Novu API Rate Limits and Usage Quotas"
+title: "Novu API Rate Limits, Usage Quotas, and Retry Guide"
 sidebarTitle: "Rate Limits"
 description: "Learn about Novu API rate limits by plan tier, how to handle 429 responses, and strategies for staying within quota during high-volume operations."
 ---
@@ -57,7 +57,7 @@ When you exceed your rate limit, Novu returns a `429 Too Many Requests` response
 async function triggerWithRetry(novu, payload, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await novu.events.trigger(payload);
+      return await novu.trigger(payload);
     } catch (error) {
       if (error.statusCode === 429 && attempt < maxRetries - 1) {
         const retryAfter = parseInt(error.headers?.['retry-after'] ?? '1', 10);

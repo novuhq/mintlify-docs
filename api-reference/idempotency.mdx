@@ -1,5 +1,5 @@
 ---
-title: "Idempotency: Prevent Duplicate API Requests"
+title: "Idempotency Keys: Prevent Duplicate Novu API Requests"
 sidebarTitle: "Idempotency"
 description: "Use the transactionId field or idempotency-key header to prevent duplicate notifications. Novu ignores repeated requests with the same identifier."
 ---
@@ -48,20 +48,28 @@ curl -X POST "https://api.novu.co/v1/events/trigger" \
 
 ```javascript JavaScript
 import { Novu } from '@novu/api';
+import { HTTPClient } from '@novu/api/lib/http';
 import { v4 as uuidv4 } from 'uuid';
-
-const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
 const idempotencyKey = `order-confirmation-order-456-${uuidv4()}`;
 
-await novu.events.trigger(
-  {
-    workflowId: 'order-confirmation',
-    to: { subscriberId: 'user-123' },
-    payload: { orderId: 'order-456' },
-  },
-  idempotencyKey,
-);
+const httpClient = new HTTPClient();
+httpClient.addHook('beforeRequest', (request) => {
+  const nextRequest = new Request(request);
+  nextRequest.headers.set('Idempotency-Key', idempotencyKey);
+  return nextRequest;
+});
+
+const novu = new Novu({
+  secretKey: process.env.NOVU_SECRET_KEY,
+  httpClient,
+});
+
+await novu.trigger({
+  workflowId: 'order-confirmation',
+  to: { subscriberId: 'user-123' },
+  payload: { orderId: 'order-456' },
+});
 ```
 
 ```python Python
@@ -165,19 +173,24 @@ Each idempotency key must be associated with exactly one request body. Generate 
 <CodeGroup>
 ```javascript JavaScript
 import { Novu } from '@novu/api';
+import { HTTPClient } from '@novu/api/lib/http';
 import { v4 as uuidv4 } from 'uuid';
-
-const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
 async function triggerWithRetry(workflowId, subscriberId, payload, maxRetries = 3) {
   const idempotencyKey = `trigger-${workflowId}-${subscriberId}-${uuidv4()}`;
 
+  const httpClient = new HTTPClient();
+  httpClient.addHook('beforeRequest', (request) => {
+    const nextRequest = new Request(request);
+    nextRequest.headers.set('Idempotency-Key', idempotencyKey);
+    return nextRequest;
+  });
+
+  const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY, httpClient });
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      return await novu.events.trigger(
-        { workflowId, to: { subscriberId }, payload },
-        idempotencyKey,
-      );
+      return await novu.trigger({ workflowId, to: { subscriberId }, payload });
     } catch (error) {
       if (error.statusCode === 409 && attempt < maxRetries) {
         const retryAfter = parseInt(error.headers?.['retry-after'] ?? '1', 10);

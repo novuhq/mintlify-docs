@@ -1,5 +1,5 @@
 ---
-title: "Bridge Endpoint: Serve Your Framework Workflows"
+title: "Bridge Endpoint: Serving Your Novu Framework Workflows"
 sidebarTitle: "Endpoint"
 description: "The Novu Framework Bridge endpoint is an HTTP handler you expose in your app. Novu calls it to execute workflow steps during notification delivery."
 ---
@@ -74,6 +74,12 @@ Register all your workflow definitions with `serve`, then export the result as y
   </Card>
   <Card title="SvelteKit" icon="s">
     `import { serve } from '@novu/framework/sveltekit'`
+  </Card>
+  <Card title="NestJS" icon="node">
+    `import { serve } from '@novu/framework/nest'`
+  </Card>
+  <Card title="AWS Lambda" icon="aws">
+    `import { serve } from '@novu/framework/lambda'`
   </Card>
 </CardGroup>
 

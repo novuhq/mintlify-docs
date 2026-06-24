@@ -1,5 +1,5 @@
 ---
-title: "API Keys: Authenticate with the Novu API"
+title: "API Keys: Authenticate and Connect to the Novu API"
 sidebarTitle: "API Keys"
 description: "Find your Novu secret key and application identifier. Use the secret key for server API calls and the application identifier for the Inbox component."
 ---
@@ -45,7 +45,9 @@ function App() {
 
 ## Secret Key
 
-The secret key is a **private credential** that authenticates all server-side API requests to Novu. Pass it when initializing the Novu SDK on your backend:
+The secret key is a **private credential** that authenticates all server-side API requests to Novu. You can use it in two ways:
+
+**With the Novu SDK** — pass it when initializing the client on your backend:
 
 ```javascript
 import { Novu } from "@novu/api";
@@ -55,6 +57,20 @@ const novu = new Novu({
   // Required if using EU region:
   // serverURL: "https://eu.api.novu.co",
 });
+```
+
+**With direct HTTP requests** — include it in the `Authorization` header using the `ApiKey` scheme:
+
+```http
+Authorization: ApiKey <NOVU_SECRET_KEY>
+```
+
+For example, using `curl`:
+
+```bash
+curl -X GET "https://api.novu.co/v1/subscribers" \
+  -H "Authorization: ApiKey <NOVU_SECRET_KEY>" \
+  -H "Content-Type: application/json"
 ```
 
 <Warning>

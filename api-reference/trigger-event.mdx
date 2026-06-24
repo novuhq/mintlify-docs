@@ -1,5 +1,5 @@
 ---
-title: "POST /v1/events/trigger — Trigger a Workflow"
+title: "Trigger Event API: POST /v1/events/trigger Reference"
 sidebarTitle: "Trigger Event"
 description: "Trigger a Novu workflow to send a notification. Pass the workflow identifier, subscriber, and optional payload. Returns a transactionId on success."
 ---
@@ -145,7 +145,7 @@ import { Novu } from '@novu/api';
 
 const novu = new Novu({ secretKey: process.env.NOVU_SECRET_KEY });
 
-const response = await novu.events.trigger({
+const response = await novu.trigger({
   workflowId: 'order-confirmation',
   to: {
     subscriberId: 'user-123',

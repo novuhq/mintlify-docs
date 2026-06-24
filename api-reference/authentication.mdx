@@ -1,5 +1,5 @@
 ---
-title: "Authenticate Requests to the Novu API"
+title: "Novu API Authentication: ApiKey Authorization Header"
 sidebarTitle: "Authentication"
 description: "All Novu API requests require an API key in the Authorization header. Find your secret key in the Novu dashboard under API Keys."
 ---
@@ -41,7 +41,7 @@ const novu = new Novu({
   secretKey: process.env.NOVU_SECRET_KEY,
 });
 
-await novu.events.trigger({
+await novu.trigger({
   workflowId: 'welcome-email',
   to: { subscriberId: 'user-123' },
   payload: {},

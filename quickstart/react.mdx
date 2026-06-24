@@ -1,7 +1,7 @@
 ---
-title: "Get Started with Novu in React"
+title: "Add In-App Notifications to Your React Application"
 sidebarTitle: "React"
-description: "Integrate the Novu notification inbox into your React app. Install @novu/react, add the Inbox component, and trigger your first in-app notification."
+description: "Install @novu/react, add the Inbox component with React Router, and trigger your first real-time in-app notification in a few minutes."
 ---
 
 The `@novu/react` package provides a drop-in `<Inbox />` component that brings real-time in-app notifications to any React application. This guide walks you through installation, wiring up the component with React Router, and sending your first notification — all in a few minutes.
@@ -67,7 +67,7 @@ bun add @novu/react
 
 ### Create the Inbox component
 
-Create `src/components/novu-inbox.tsx`. Pass your `applicationIdentifier` and `subscriberId` as props, and provide a `routerPush` function to enable deep-linking from notification actions:
+Create `src/components/novu-inbox.tsx`. Pass your `applicationIdentifier` and `subscriber` (your user's ID) as props, and provide a `routerPush` function to enable deep-linking from notification actions:
 
 ```tsx src/components/novu-inbox.tsx
 import { Inbox } from '@novu/react';

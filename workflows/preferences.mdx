@@ -1,5 +1,5 @@
 ---
-title: "Workflow Notification Preferences"
+title: "Configure Novu Workflow Notification Channel Preferences"
 sidebarTitle: "Preferences"
 description: "Configure default channel preferences for each Novu workflow and allow subscribers to override them through the Inbox preferences panel."
 ---
@@ -10,9 +10,9 @@ Novu provides a layered preferences system that gives you control over default n
 
 Novu supports three levels of preferences, applied in order of priority:
 
-1. **Workflow channel preferences** — Set by you in the Novu dashboard. Controls which channels are enabled for a specific workflow.
-2. **Subscriber global preferences** — Set by the subscriber. Overrides all workflow-specific settings for a given channel across all workflows.
-3. **Subscriber channel preferences per workflow** — Set by the subscriber. Controls channel behavior for a specific workflow individually.
+1. **Workflow channel preferences** — Set by you in the Novu dashboard. Controls which channels are enabled for a specific workflow. Has the highest priority and cannot be overridden by subscribers.
+2. **Subscriber global preferences** — Set by the subscriber. Disabling a channel globally prevents notifications through that channel from all workflows, overriding the subscriber's individual per-workflow settings.
+3. **Subscriber channel preferences per workflow** — Set by the subscriber. Controls channel behavior for a specific workflow individually. Has the lowest priority and is overridden by both workflow-level and global preferences.
 
 The priority order is:
 

@@ -1,5 +1,5 @@
 ---
-title: "Framework Controls: No-Code Editing for Teammates"
+title: "Framework Controls: Dashboard Editing for Teammates"
 sidebarTitle: "Controls"
 description: "Expose editable fields in the Novu dashboard for non-technical users. Define a controlSchema on any workflow step to enable no-code content editing."
 ---
@@ -81,6 +81,8 @@ Add a `controlSchema` to the options object of any step. The schema can be a **Z
   ```
 
   ```typescript JSON Schema
+  import { workflow } from '@novu/framework';
+
   workflow('new-signup', async ({ step, payload }) => {
     await step.email(
       'send-email',
